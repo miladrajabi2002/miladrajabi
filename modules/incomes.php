@@ -94,13 +94,6 @@ function generateIncomeReport()
       $growth_text = ($growth > 0 ? '+' : ($growth < 0 ? '-' : '')) . $growth_text . " " . $growth_icon;
    }
    
-   // بهترین مشتریان (3 تا)
-   $stmt = $pdo->prepare("SELECT client_name, monthly_amount 
-      FROM incomes WHERE is_active = 1 
-      ORDER BY monthly_amount DESC LIMIT 3");
-   $stmt->execute();
-   $top_clients = $stmt->fetchAll();
-   
    // تولید متن گزارش
    $persian_month = jdate('F Y');
    
@@ -117,16 +110,6 @@ function generateIncomeReport()
    if ($growth_text) {
       $summary .= "📊 <b>روند رشد:</b>\n";
       $summary .= "• نسبت به ماه قبل: $growth_text\n\n";
-   }
-   
-   if (!empty($top_clients)) {
-      $summary .= "🏆 <b>بهترین مشتریان:</b>\n";
-      $i = 1;
-      foreach ($top_clients as $client) {
-         $icon = ['1️⃣', '2️⃣', '3️⃣'][$i - 1];
-         $summary .= "$icon " . $client['client_name'] . " - " . number_format($client['monthly_amount']) . " تومان\n";
-         $i++;
-      }
    }
    
    return [
