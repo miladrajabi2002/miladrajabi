@@ -16,6 +16,17 @@ try {
       $today = date('Y-m-d');
       $persian_today = jdate('Y/n/j');
 
+      // 💰 درآمد ماه جاری
+      $stmt = $pdo->prepare(
+         "SELECT SUM(monthly_amount) FROM incomes WHERE is_active = 1"
+      );
+      $stmt->execute();
+      $monthly_income = $stmt->fetchColumn();
+
+      if ($monthly_income > 0) {
+         $summary[] = "├ درآمد ماه جاری: " . number_format($monthly_income) . " تومان";
+      }
+
       // 🔔 یادآورهای امروز
       $stmt = $pdo->prepare(
          "SELECT COUNT(*) FROM reminders 
@@ -159,15 +170,16 @@ try {
          }
       }
 
-      $summary[count($summary) - 1] = str_replace('├', '└', end($summary));
+      if (!empty($summary)) {
+         $summary[count($summary) - 1] = str_replace('├', '└', end($summary));
+      }
 
       // اگر هیچ موردی نبود
       if (empty($summary)) {
          return "✨ همه چیز مرتب است! امروز روز عالی‌ای خواهد بود.";
       }
 
-      // return implode("\n", array_slice($summary, 0, 5)); // حداکثر 5 مورد
-      return implode("\n", $summary); // حداکثر 5 مورد
+      return implode("\n", $summary);
    }
 
    function askToSaveAsNote($chat_id, $user_id, $text)
@@ -253,7 +265,7 @@ try {
       showMainMenu($chat_id, $user_id);
    }
 
-   // منوی اصلی (بدون نمایش اشتراک پریمیوم)
+   // منوی اصلی
    function showMainMenu($chat_id, $user_id, $text = null)
    {
       $user = getUser($user_id);
@@ -272,12 +284,13 @@ try {
 
       $keyboard = [
          'inline_keyboard' => [
+            [['text' => '💰 درآمدها', 'callback_data' => 'incomes']], // دکمه بزرگ اولی
             [
                ['text' => '🕑 یادآورها', 'callback_data' => 'reminders'],
                ['text' => '📒 یادداشت‌ها', 'callback_data' => 'notes']
             ],
             [
-               ['text' => '💰 مالی', 'callback_data' => 'finance'],
+               ['text' => '💳 مالی', 'callback_data' => 'finance'],
                ['text' => '✅ عادت‌ها', 'callback_data' => 'habits']
             ],
             [
@@ -365,6 +378,13 @@ try {
          return;
       }
 
+      // مراحل درآمدها
+      if (strpos($step, 'income_') === 0) {
+         require_once 'modules/incomes.php';
+         processIncomeForm($chat_id, $user_id, $text, $step);
+         return;
+      }
+
       // مراحل مالی
       if (strpos($step, 'finance_') === 0) {
          require_once 'modules/finance.php';
@@ -390,7 +410,6 @@ try {
          return;
       }
 
-      // مراحل مالی
       if (strpos($step, 'task_') === 0) {
          require_once 'modules/tasks.php';
          processTaskForm($chat_id, $user_id, $text, $step);
@@ -466,6 +485,10 @@ try {
          }
 
          switch ($data) {
+            case 'incomes':
+               require_once 'modules/incomes.php';
+               showIncomesMenu($chat_id, $user_id, $message_id);
+               break;
             case 'reminders':
                require_once 'modules/reminder.php';
                showReminderMenu($chat_id, $user_id, $message_id);
@@ -503,14 +526,11 @@ try {
                showMainMenu($chat_id, $user_id);
                break;
             default:
-               // بررسی نیاز به ثبت نام
-               // if ($data != 'back_main' && !isUserRegistered($user)) {
-               //    requestRegistration($chat_id, $user_id, $data);
-               //    return;
-               // }
-
                // ارسال به ماژول مربوطه
-               if (strpos($data, 'reminder_') === 0) {
+               if (strpos($data, 'income_') === 0) {
+                  require_once 'modules/incomes.php';
+                  handleIncomeCallback($chat_id, $user_id, $data, $message_id);
+               } elseif (strpos($data, 'reminder_') === 0) {
                   require_once 'modules/reminder.php';
                   handleReminderCallback($chat_id, $user_id, $data, $message_id);
                } elseif (strpos($data, 'note_') === 0) {
@@ -592,4 +612,3 @@ try {
 } catch (\Throwable $th) {
    sendMessage($ADMINS[0], "BUG\n\n" . $th);
 }
-
