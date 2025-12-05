@@ -46,7 +46,7 @@ function validatePersianDate($date_str)
       $month = intval($matches[2]);
       $day = intval($matches[3]);
 
-      if ($year >= 1400 && $year <= 1450 && $month >= 1 && $month <= 12 && $day >= 1 && $day <= 31) {
+      if ($year >= 1300 && $year <= 1500 && $month >= 1 && $month <= 12 && $day >= 1 && $day <= 31) {
          // استفاده از تابع jalali_to_gregorian از jdf.php
          list($gy, $gm, $gd) = jalali_to_gregorian($year, $month, $day);
          return sprintf('%04d-%02d-%02d', $gy, $gm, $gd);
@@ -1102,5 +1102,6 @@ function answerCallbackQuery($callback_query_id, $text = '', $show_alert = false
 
    return makeRequest('answerCallbackQuery', $data);
 }
+
 
 
