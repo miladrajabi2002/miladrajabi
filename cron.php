@@ -21,8 +21,6 @@ try {
    sendMessage($ADMINS[0], "BUG CRON\n\n" . $th->getMessage());
 }
 
-define('SINGLE_USER_ID', 1253939828);
-
 
 /**
  * بررسی و اجرای تسک در صورت رسیدن زمان
@@ -106,7 +104,7 @@ function processReminders()
          ]
       ];
 
-      sendMessage(SINGLE_USER_ID, $text, $keyboard);
+      sendMessage(1253939828, $text, $keyboard);
 
       if ($reminder['repeat_type'] == 'once') {
          // غیرفعال کردن یادآور یکبار
@@ -171,7 +169,7 @@ function processFinancialDueReminders()
          ]
       ];
 
-      sendMessage(SINGLE_USER_ID, $text, $keyboard);
+      sendMessage(1253939828, $text, $keyboard);
       usleep(100000);
    }
 
@@ -218,7 +216,7 @@ function processFinancialDueReminders()
          ]
       ];
 
-      sendMessage(SINGLE_USER_ID, $text, $keyboard);
+      sendMessage(1253939828, $text, $keyboard);
       usleep(100000);
    }
 }
@@ -280,7 +278,7 @@ function processOverdueChecks()
          ]
       ];
 
-      sendMessage(SINGLE_USER_ID, $text, $keyboard);
+      sendMessage(1253939828, $text, $keyboard);
 
       // آپدیت کردن تاریخ آخرین یادآوری
       if (!empty($check_ids)) {
@@ -330,7 +328,7 @@ function processDocumentExpiry()
          ]
       ];
 
-      sendMessage(SINGLE_USER_ID, $text, $keyboard);
+      sendMessage(1253939828, $text, $keyboard);
 
       // بروزرسانی تاریخ ارسال
       $pdo->prepare("UPDATE documents SET last_reminder_sent = CURDATE() WHERE id = ?")
@@ -361,7 +359,7 @@ function processDocumentExpiry()
          ]
       ];
 
-      sendMessage(SINGLE_USER_ID, $text, $keyboard);
+      sendMessage(1253939828, $text, $keyboard);
       usleep(100000);
    }
 }
@@ -435,7 +433,7 @@ function processExpiredDocumentsDaily()
          ];
       }
 
-      sendMessage(SINGLE_USER_ID, $text, $keyboard);
+      sendMessage(1253939828, $text, $keyboard);
 
       // بروزرسانی تاریخ ارسال
       $doc_ids = array_column($expired_docs, 'id');
@@ -461,7 +459,7 @@ function sendMotivationalMessages()
    }
 
    $message = getMotivationalMessage();
-   sendMessage(SINGLE_USER_ID, "🌟 " . $message);
+   sendMessage(1253939828, "🌟 " . $message);
    usleep(100000);
 }
 
@@ -520,7 +518,7 @@ function processHabitEveningReminders()
          ]
       ];
 
-      sendMessage(SINGLE_USER_ID, $text, $keyboard);
+      sendMessage(1253939828, $text, $keyboard);
       usleep(100000);
    }
 }
@@ -582,7 +580,7 @@ function sendHabitReminders()
             ]
          ];
 
-         sendMessage(SINGLE_USER_ID, $text, $keyboard);
+         sendMessage(1253939828, $text, $keyboard);
          error_log("Habit reminder sent at " . date('Y-m-d H:i:s'));
       }
    } catch (Exception $e) {
@@ -647,7 +645,7 @@ function resetDailyHabits()
             ]
          ];
 
-         sendMessage(SINGLE_USER_ID, $text, $keyboard);
+         sendMessage(1253939828, $text, $keyboard);
       }
    } catch (Exception $e) {
       error_log("Error in resetDailyHabits: " . $e->getMessage());
@@ -699,7 +697,7 @@ function processBirthdayReminders()
          ]
       ];
 
-      sendMessage(SINGLE_USER_ID, $text, $keyboard);
+      sendMessage(1253939828, $text, $keyboard);
 
       // ثبت ارسال یادآوری
       $update_stmt = $pdo->prepare("UPDATE contacts SET last_birthday_reminder = CURDATE() WHERE id = ?");
@@ -748,7 +746,7 @@ function processUpcomingBirthdays()
          ]
       ];
 
-      sendMessage(SINGLE_USER_ID, $text, $keyboard);
+      sendMessage(1253939828, $text, $keyboard);
       usleep(100000);
    }
 }
@@ -807,7 +805,7 @@ function processContactReminders()
          ]
       ];
 
-      sendMessage(SINGLE_USER_ID, $text, $keyboard);
+      sendMessage(1253939828, $text, $keyboard);
       usleep(100000);
    }
 }
@@ -830,3 +828,4 @@ function calculateNextReminderTime($current_time, $repeat_type)
          return $current_time;
    }
 }
+
