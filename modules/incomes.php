@@ -116,7 +116,7 @@ function generateIncomeReport()
    
    if ($growth_text) {
       $summary .= "📊 <b>روند رشد:</b>\n";
-      $summary .= "└ نسبت به ماه قبل: $growth_text\n\n";
+      $summary .= "• نسبت به ماه قبل: $growth_text\n\n";
    }
    
    if (!empty($top_clients)) {
@@ -263,7 +263,7 @@ function formatIncomePaymentLine($income, $current_day)
    
    // اضافه کردن لینک ربات/سایت
    if (!empty($income['bot_url'])) {
-      $line .= "\n   🔗 <a href='" . $income['bot_url'] . "'>لینک</a>";
+      $line .= "\n   🔗 <a href='" . $income['bot_url'] . "'>ربات | سایت</a>";
    }
    
    $line .= "\n";
@@ -317,11 +317,13 @@ function showIncomesList($chat_id, $user_id, $message_id, $filter = 'all', $sort
       foreach ($active as $idx => $income) {
          $months = calculateMonthsDiff($income['start_date'], date('Y-m-d'));
          $total = $income['monthly_amount'] * $months;
-         
-         $text .= "\n" . ($idx + 1) . "️⃣ <b>" . $income['client_name'] . "</b>";
+
+         $text .= "\n" . ($idx + 1) . "️⃣ ";
          if (!empty($income['client_username'])) {
-            $username = str_replace('@', '', $income['client_username']);
-            $text .= " (<a href='https://t.me/$username'>@$username</a>)";
+             $username = ltrim($income['client_username'], '@');
+             $text .= "<a href='https://t.me/$username'>" . htmlspecialchars($income['client_name']) . "</a>";
+         } else {
+             $text .= "<b>" . htmlspecialchars($income['client_name']) . "</b>";
          }
          $text .= "\n";
          $text .= "   🛠 " . $income['service_type'] . "\n";
@@ -468,15 +470,15 @@ function showDetailedReport($chat_id, $user_id, $message_id, $month_offset = 0)
    
    $text = "📊 <b>گزارش تفصیلی درآمد</b>\n\n";
    $text .= "📅 <b>$persian_month:</b>\n";
-   $text .= "┌─────────────────────────────┐\n";
+   $text .= "┌────────────────────────┐\n";
    
    foreach ($sources as $source) {
       $text .= "│ " . $source['client_name'] . " - " . number_format($source['monthly_amount']) . " ت\n";
    }
    
-   $text .= "├─────────────────────────────┤\n";
+   $text .= "├────────────────────────┤\n";
    $text .= "│ جمع کل: " . number_format($total) . " تومان\n";
-   $text .= "└─────────────────────────────┘\n\n";
+   $text .= "└────────────────────────┘\n\n";
    
    // روند 6 ماه اخیر
    $text .= "📈 <b>روند 6 ماه اخیر:</b>\n";
@@ -516,7 +518,7 @@ function showDetailedReport($chat_id, $user_id, $message_id, $month_offset = 0)
    // تحلیل هزینه
    $suggested_expense = $total * 0.7;
    $text .= "\n⚠️ <b>تحلیل هزینه:</b>\n";
-   $text .= "└ با درآمد " . number_format($total / 1000000, 1) . "M، بودجه پیشنهادی هزینه: حداکثر " . number_format($suggested_expense / 1000000, 1) . "M تومان";
+   $text .= "• با درآمد " . number_format($total / 1000000, 1) . "M، بودجه پیشنهادی هزینه: حداکثر " . number_format($suggested_expense / 1000000, 1) . "M تومان";
    
    $keyboard = [
       'inline_keyboard' => [
