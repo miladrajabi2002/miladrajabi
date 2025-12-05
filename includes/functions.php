@@ -46,11 +46,6 @@ function convertPersianToEnglish($text)
    return str_replace($persian, $english, $text);
 }
 
-function isUserRegistered($user)
-{
-   return !empty($user['full_name']) && !empty($user['phone']) && $user['step'] !== 'registration_name' && $user['step'] !== 'registration_phone';
-}
-
 function extractTimeFromText($text, &$date_changed = false)
 {
    $now = time();
@@ -1090,3 +1085,4 @@ function answerCallbackQuery($callback_query_id, $text = '', $show_alert = false
 
    return makeRequest('answerCallbackQuery', $data);
 }
+
