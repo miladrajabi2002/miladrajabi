@@ -4,8 +4,7 @@ function showReminderMenu($chat_id, $user_id, $message_id)
 {
    global $pdo;
 
-   $stmt = $pdo->prepare("SELECT COUNT(*) FROM reminders WHERE user_id = :user_id");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   $stmt = $pdo->prepare("SELECT COUNT(*) FROM reminders");
    $stmt->execute();
    $count = $stmt->fetchColumn();
 
@@ -127,21 +126,21 @@ function showRemindersList($chat_id, $user_id, $message_id, $page = 1)
    $offset = ($page - 1) * $limit;
 
    // نمایش همه یادآورها (فعال و غیرفعال)
-   $stmt = $pdo->prepare("SELECT * FROM reminders WHERE user_id = :user_id ORDER BY reminder_time ASC LIMIT :limit OFFSET :offset");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   $stmt = $pdo->prepare("SELECT * FROM reminders ORDER BY reminder_time ASC LIMIT :limit OFFSET :offset");
+
    $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
    $stmt->execute();
    $reminders = $stmt->fetchAll();
 
-   $stmt = $pdo->prepare("SELECT COUNT(*) FROM reminders WHERE user_id = :user_id");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   $stmt = $pdo->prepare("SELECT COUNT(*) FROM reminders");
+
    $stmt->execute();
    $total = $stmt->fetchColumn();
 
    // شمارش فعال و غیرفعال
-   $stmt = $pdo->prepare("SELECT COUNT(*) FROM reminders WHERE user_id = :user_id AND is_active = :is_active");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   $stmt = $pdo->prepare("SELECT COUNT(*) FROM reminders WHERE is_active = :is_active");
+
    $stmt->bindValue(':is_active', 1, PDO::PARAM_INT);
    $stmt->execute();
    $active_count = $stmt->fetchColumn();
@@ -241,9 +240,9 @@ function showReminderDetails($chat_id, $user_id, $reminder_id, $message_id)
 {
    global $pdo;
 
-   $stmt = $pdo->prepare("SELECT * FROM reminders WHERE id = :id AND user_id = :user_id");
+   $stmt = $pdo->prepare("SELECT * FROM reminders WHERE id = :id");
    $stmt->bindValue(':id', $reminder_id, PDO::PARAM_INT);
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+
    $stmt->execute();
    $reminder = $stmt->fetch();
 
@@ -534,8 +533,8 @@ function showReminderStats($chat_id, $user_id, $message_id)
         COUNT(*) as total,
         SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active,
         COUNT(DISTINCT repeat_type) as types
-        FROM reminders WHERE user_id = :user_id");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+        FROM reminders");
+
    $stmt->execute();
    $stats = $stmt->fetch();
 
@@ -543,11 +542,11 @@ function showReminderStats($chat_id, $user_id, $message_id)
         DATE(reminder_time) as reminder_date,
         COUNT(*) as count
         FROM reminders 
-        WHERE user_id = :user_id AND is_active = :is_active AND reminder_time >= CURDATE()
+        WHERE is_active = :is_active AND reminder_time >= CURDATE()
         GROUP BY DATE(reminder_time)
         ORDER BY reminder_time ASC
         LIMIT 7");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+
    $stmt->bindValue(':is_active', 1, PDO::PARAM_INT);
    $stmt->execute();
    $upcoming = $stmt->fetchAll();
@@ -741,8 +740,7 @@ function saveReminder($user_id, $title, $reminder_datetime, $repeat_type = 'once
 {
    global $pdo;
 
-   $stmt = $pdo->prepare("INSERT INTO reminders (user_id, title, description, reminder_time, repeat_type, is_active, created_at) VALUES (:user_id, :title, :description, :reminder_time, :repeat_type, 1, NOW())");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   $stmt = $pdo->prepare("INSERT INTO reminders (title, description, reminder_time, repeat_type, is_active, created_at) VALUES (:title, :description, :reminder_time, :repeat_type, 1, NOW())");
    $stmt->bindValue(':title', $title, PDO::PARAM_STR);
    $stmt->bindValue(':description', $description, PDO::PARAM_STR);
    $stmt->bindValue(':reminder_time', $reminder_datetime, PDO::PARAM_STR);
@@ -759,9 +757,9 @@ function deleteReminder($chat_id, $user_id, $reminder_id, $message_id)
 {
    global $pdo;
 
-   $stmt = $pdo->prepare("DELETE FROM reminders WHERE id = :id AND user_id = :user_id");
+   $stmt = $pdo->prepare("DELETE FROM reminders WHERE id = :id");
    $stmt->bindValue(':id', $reminder_id, PDO::PARAM_INT);
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+
 
    if ($stmt->execute()) {
       global $callback_query_id;
@@ -801,9 +799,9 @@ function markReminderDone($chat_id, $user_id, $reminder_id, $message_id)
    global $pdo;
 
    // دریافت اطلاعات یادآور
-   $stmt = $pdo->prepare("SELECT * FROM reminders WHERE id = :id AND user_id = :user_id");
+   $stmt = $pdo->prepare("SELECT * FROM reminders WHERE id = :id");
    $stmt->bindValue(':id', $reminder_id, PDO::PARAM_INT);
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+
    $stmt->execute();
    $reminder = $stmt->fetch();
 
@@ -815,9 +813,9 @@ function markReminderDone($chat_id, $user_id, $reminder_id, $message_id)
 
    if ($reminder['repeat_type'] == 'once') {
       // یادآور یکبار - حذف کامل
-      $stmt = $pdo->prepare("DELETE FROM reminders WHERE id = :id AND user_id = :user_id");
+      $stmt = $pdo->prepare("DELETE FROM reminders WHERE id = :id");
       $stmt->bindValue(':id', $reminder_id, PDO::PARAM_INT);
-      $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   
 
       if ($stmt->execute()) {
          global $callback_query_id;
@@ -832,10 +830,10 @@ function markReminderDone($chat_id, $user_id, $reminder_id, $message_id)
 
       if ($next_time) {
          // بروزرسانی زمان یادآور فعلی
-         $stmt = $pdo->prepare("UPDATE reminders SET reminder_time = :reminder_time WHERE id = :id AND user_id = :user_id");
+         $stmt = $pdo->prepare("UPDATE reminders SET reminder_time = :reminder_time WHERE id = :id");
          $stmt->bindValue(':reminder_time', $next_time, PDO::PARAM_STR);
          $stmt->bindValue(':id', $reminder_id, PDO::PARAM_INT);
-         $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+      
 
          if ($stmt->execute()) {
             global $callback_query_id;
@@ -878,9 +876,9 @@ function snoozeReminder($chat_id, $user_id, $reminder_id, $message_id)
    global $pdo;
 
    // 1 ساعت به تعویق انداختن
-   $stmt = $pdo->prepare("UPDATE reminders SET is_active = 1, reminder_time = DATE_ADD(reminder_time, INTERVAL 1 HOUR) WHERE id = :id AND user_id = :user_id");
+   $stmt = $pdo->prepare("UPDATE reminders SET is_active = 1, reminder_time = DATE_ADD(reminder_time, INTERVAL 1 HOUR) WHERE id = :id");
    $stmt->bindValue(':id', $reminder_id, PDO::PARAM_INT);
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+
 
    if ($stmt->execute()) {
       deleteMessage($chat_id, $message_id);
@@ -996,9 +994,9 @@ function activateReminder($chat_id, $user_id, $reminder_id, $message_id)
 {
    global $pdo;
 
-   $stmt = $pdo->prepare("UPDATE reminders SET is_active = 1 WHERE id = :id AND user_id = :user_id");
+   $stmt = $pdo->prepare("UPDATE reminders SET is_active = 1 WHERE id = :id");
    $stmt->bindValue(':id', $reminder_id, PDO::PARAM_INT);
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+
 
    if ($stmt->execute()) {
       global $callback_query_id;
@@ -1009,3 +1007,4 @@ function activateReminder($chat_id, $user_id, $reminder_id, $message_id)
       answerCallbackQuery($callback_query_id, "❌ خطا در فعال کردن یادآور");
    }
 }
+
