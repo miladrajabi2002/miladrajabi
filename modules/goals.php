@@ -72,9 +72,9 @@ function handleGoalCallback($chat_id, $user_id, $data, $message_id)
    } elseif (strpos($data, 'goal_complete_') === 0) {
       $goal_id = str_replace('goal_complete_', '', $data);
 
-      $stmt = $pdo->prepare("UPDATE goals SET is_completed = 1, progress = 100, updated_at = NOW() WHERE id = :id AND user_id = :user_id");
+      $stmt = $pdo->prepare("UPDATE goals SET is_completed = 1, progress = 100, updated_at = NOW() WHERE id = :id");
       $stmt->bindValue(':id', $goal_id, PDO::PARAM_INT);
-      $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+      
       $stmt->execute();
 
       showGoalsList($chat_id, $user_id, $message_id);
@@ -96,21 +96,21 @@ function handleGoalCallback($chat_id, $user_id, $data, $message_id)
    } elseif (strpos($data, 'goal_confirmdelete_') === 0) {
       $goal_id = str_replace('goal_confirmdelete_', '', $data);
 
-      $stmt = $pdo->prepare("DELETE FROM goals WHERE id = :id AND user_id = :user_id");
+      $stmt = $pdo->prepare("DELETE FROM goals WHERE id = :id");
       $stmt->bindValue(':id', $goal_id, PDO::PARAM_INT);
-      $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+      
       $stmt->execute();
 
       showGoalsList($chat_id, $user_id, $message_id);
    } elseif ($data == 'goal_toggle_motivation') {
-      $stmt = $pdo->prepare("UPDATE user_settings SET daily_motivation = NOT daily_motivation WHERE user_id = :user_id");
-      $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+      $stmt = $pdo->prepare("UPDATE user_settings SET daily_motivation = NOT daily_motivation");
+      
       $stmt->execute();
 
       showGoalSettings($chat_id, $user_id, $message_id);
    } elseif ($data == 'goal_skip_description') {
-      $stmt = $pdo->prepare("SELECT temp_data FROM users WHERE user_id = :user_id");
-      $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+      $stmt = $pdo->prepare("SELECT temp_data FROM users");
+      
       $stmt->execute();
       $temp_data = json_decode($stmt->fetchColumn(), true);
 
@@ -140,17 +140,17 @@ function handleGoalCallback($chat_id, $user_id, $data, $message_id)
 
       editMessage($chat_id, $message_id, $response, $keyboard);
    } elseif ($data == 'goal_skip_date') {
-      $stmt = $pdo->prepare("SELECT temp_data FROM users WHERE user_id = :user_id");
-      $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+      $stmt = $pdo->prepare("SELECT temp_data FROM users");
+      
       $stmt->execute();
       $temp_data = json_decode($stmt->fetchColumn(), true);
 
       // ذخیره هدف بدون تاریخ
       $stmt = $pdo->prepare("
-            INSERT INTO goals (user_id, title, description, created_at)
-            VALUES (:user_id, :title, :description, NOW())
+            INSERT INTO goals (title, description, created_at)
+            VALUES (:title, :description, NOW())
         ");
-      $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+      
       $stmt->bindValue(':title', $temp_data['title'], PDO::PARAM_STR);
       $stmt->bindValue(':description', $temp_data['description'] ?? null, PDO::PARAM_STR);
       $stmt->execute();
@@ -174,8 +174,8 @@ function handleGoalCallback($chat_id, $user_id, $data, $message_id)
    } elseif (strpos($data, 'goal_date_') === 0) {
       $period = str_replace('goal_date_', '', $data);
 
-      $stmt = $pdo->prepare("SELECT temp_data FROM users WHERE user_id = :user_id");
-      $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+      $stmt = $pdo->prepare("SELECT temp_data FROM users");
+      
       $stmt->execute();
       $temp_data = json_decode($stmt->fetchColumn(), true);
 
@@ -198,10 +198,10 @@ function handleGoalCallback($chat_id, $user_id, $data, $message_id)
 
       // ذخیره هدف
       $stmt = $pdo->prepare("
-            INSERT INTO goals (user_id, title, description, target_date, created_at)
-            VALUES (:user_id, :title, :description, :target_date, NOW())
+            INSERT INTO goals (title, description, target_date, created_at)
+            VALUES (:title, :description, :target_date, NOW())
         ");
-      $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+      
       $stmt->bindValue(':title',  $temp_data['title'], PDO::PARAM_STR);
       $stmt->bindValue(':description', $temp_data['description'] ?? null, PDO::PARAM_STR);
       $stmt->bindValue(':target_date', $target_date, PDO::PARAM_STR);
@@ -229,16 +229,16 @@ function handleGoalCallback($chat_id, $user_id, $data, $message_id)
       $goal_id = $parts[3];
       $progress = $parts[4];
 
-      $stmt = $pdo->prepare("UPDATE goals SET progress = :progress, updated_at = NOW() WHERE id = :id AND user_id = :user_id");
+      $stmt = $pdo->prepare("UPDATE goals SET progress = :progress, updated_at = NOW() WHERE id = :id");
       $stmt->bindValue(':id', $goal_id, PDO::PARAM_INT);
-      $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+      
       $stmt->bindValue(':progress', $progress, PDO::PARAM_INT);
       $stmt->execute();
 
       if ($percentage == 100) {
-         $stmt = $pdo->prepare("UPDATE goals SET is_completed = 1 WHERE id = :id AND user_id = :user_id");
+         $stmt = $pdo->prepare("UPDATE goals SET is_completed = 1 WHERE id = :id");
          $stmt->bindValue(':id', $goal_id, PDO::PARAM_INT);
-         $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+         
          $stmt->execute();
       }
 
@@ -250,24 +250,24 @@ function handleGoalCallback($chat_id, $user_id, $data, $message_id)
       $amount = $parts[4];
 
       // دریافت پیشرفت فعلی
-      $stmt = $pdo->prepare("SELECT progress FROM goals WHERE id = :id AND user_id = :user_id");
+      $stmt = $pdo->prepare("SELECT progress FROM goals WHERE id = :id");
       $stmt->bindValue(':id', $goal_id, PDO::PARAM_INT);
-      $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+      
       $stmt->execute();
       $current_progress = $stmt->fetchColumn();
 
       $new_progress = min(100, $current_progress + $amount);
 
-      $stmt = $pdo->prepare("UPDATE goals SET progress = :progress, updated_at = NOW() WHERE id = :id AND user_id = :user_id");
+      $stmt = $pdo->prepare("UPDATE goals SET progress = :progress, updated_at = NOW() WHERE id = :id");
       $stmt->bindValue(':id', $goal_id, PDO::PARAM_INT);
-      $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+      
       $stmt->bindValue(':progress', $new_progress, PDO::PARAM_INT);
       $stmt->execute();
 
       if ($new_progress == 100) {
-         $stmt = $pdo->prepare("UPDATE goals SET is_completed = 1 WHERE id = :id AND user_id = :user_id");
+         $stmt = $pdo->prepare("UPDATE goals SET is_completed = 1 WHERE id = :id");
          $stmt->bindValue(':id', $goal_id, PDO::PARAM_INT);
-         $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+         
          $stmt->execute();
       }
 
@@ -305,17 +305,17 @@ function showGoalsList($chat_id, $user_id, $message_id, $page = 1)
    // دریافت اهداف - حل مشکل SQL
    $stmt = $pdo->prepare("
         SELECT * FROM goals 
-        WHERE user_id = :user_id
+       
         ORDER BY is_completed ASC, created_at DESC 
         LIMIT $per_page OFFSET $offset
     ");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   
    $stmt->execute();
    $goals = $stmt->fetchAll();
 
    // تعداد کل
-   $stmt = $pdo->prepare("SELECT COUNT(*) FROM goals WHERE user_id = :user_id");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   $stmt = $pdo->prepare("SELECT COUNT(*) FROM goals");
+   
    $stmt->execute();
    $total = $stmt->fetchColumn();
    $total_pages = ceil($total / $per_page);
@@ -388,9 +388,9 @@ function viewGoal($chat_id, $user_id, $goal_id, $message_id)
 {
    global $pdo;
 
-   $stmt = $pdo->prepare("SELECT * FROM goals WHERE id = :id AND user_id = :user_id");
+   $stmt = $pdo->prepare("SELECT * FROM goals WHERE id = :id");
    $stmt->bindValue(':id', $goal_id, PDO::PARAM_INT);
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   
    $stmt->execute();
    $goal = $stmt->fetch();
 
@@ -454,9 +454,9 @@ function updateGoalProgress($chat_id, $user_id, $goal_id, $message_id)
 {
    global $pdo;
 
-   $stmt = $pdo->prepare("SELECT title, progress FROM goals WHERE id = :id AND user_id = :user_id");
+   $stmt = $pdo->prepare("SELECT title, progress FROM goals WHERE id = :id");
    $stmt->bindValue(':id', $goal_id, PDO::PARAM_INT);
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   
    $stmt->execute();
    $goal = $stmt->fetch();
 
@@ -603,20 +603,10 @@ function showGoalSettings($chat_id, $user_id, $message_id)
 {
    global $pdo;
 
-   $stmt = $pdo->prepare("SELECT * FROM user_settings WHERE user_id = :user_id");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   $stmt = $pdo->prepare("SELECT * FROM user_settings");
+   
    $stmt->execute();
    $settings = $stmt->fetch();
-
-   if (!$settings) {
-      $stmt = $pdo->prepare("INSERT INTO user_settings (user_id, daily_motivation, motivation_time) VALUES (:user_id, 1, '09:00:00')");
-      $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
-      $stmt->execute();
-      $settings = [
-         'daily_motivation' => 1,
-         'motivation_time' => '09:00:00'
-      ];
-   }
 
    $text = "⚙️ <b>تنظیمات هدف‌گذاری</b>\n\n";
 
@@ -671,9 +661,9 @@ function getGoalStats($user_id)
             COUNT(CASE WHEN is_completed = 0 THEN 1 END) as active_goals,
             COALESCE(AVG(progress), 0) as avg_progress
         FROM goals 
-        WHERE user_id = :user_id
+       
     ");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   
    $stmt->execute();
    $stats = $stmt->fetch();
 
@@ -688,11 +678,11 @@ function getGoalStats($user_id)
    $stmt = $pdo->prepare("
         SELECT title, progress 
         FROM goals 
-        WHERE user_id = :user_id AND is_completed = 0 
+        WHERE is_completed = 0 
         ORDER BY progress DESC 
         LIMIT 1
     ");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   
    $stmt->execute();
    $stats['best_goal'] = $stmt->fetch();
 
@@ -791,8 +781,8 @@ function processGoalForm($chat_id, $user_id, $text, $step)
 
       sendMessage($chat_id, $response, $keyboard);
    } elseif ($step == 'goal_description') {
-      $stmt = $pdo->prepare("SELECT temp_data FROM users WHERE user_id = :user_id");
-      $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+      $stmt = $pdo->prepare("SELECT temp_data FROM users");
+      
       $stmt->execute();
       $temp_data = json_decode($stmt->fetchColumn(), true);
 
@@ -824,8 +814,8 @@ function processGoalForm($chat_id, $user_id, $text, $step)
 
       sendMessage($chat_id, $response, $keyboard);
    } elseif ($step == 'goal_date') {
-      $stmt = $pdo->prepare("SELECT temp_data FROM users WHERE user_id = :user_id");
-      $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+      $stmt = $pdo->prepare("SELECT temp_data FROM users");
+      
       $stmt->execute();
       $temp_data = json_decode($stmt->fetchColumn(), true);
 
@@ -833,10 +823,10 @@ function processGoalForm($chat_id, $user_id, $text, $step)
 
       // ذخیره هدف
       $stmt = $pdo->prepare("
-            INSERT INTO goals (user_id, title, description, target_date, created_at)
-            VALUES (:user_id, :title, :description, :target_date, NOW())
+            INSERT INTO goals (title, description, target_date, created_at)
+            VALUES (:title, :description, :target_date, NOW())
         ");
-      $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+      
       $stmt->bindValue(':title', $temp_data['title'], PDO::PARAM_STR);
       $stmt->bindValue(':description', $temp_data['description'] ?? null, PDO::PARAM_STR);
       $stmt->bindValue(':target_date', $target_date, PDO::PARAM_STR);
@@ -867,9 +857,9 @@ function processGoalForm($chat_id, $user_id, $text, $step)
          return;
       }
 
-      $stmt = $pdo->prepare("UPDATE goals SET progress = :progress, updated_at = NOW() WHERE id = :id AND user_id = :user_id");
+      $stmt = $pdo->prepare("UPDATE goals SET progress = :progress, updated_at = NOW() WHERE id = :id");
       $stmt->bindValue(':progress', $text, PDO::PARAM_STR);
-      $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+      
       $stmt->bindValue(':id', $goal_id, PDO::PARAM_INT);
       $stmt->execute();
 
@@ -878,9 +868,9 @@ function processGoalForm($chat_id, $user_id, $text, $step)
       $response = "✅ پیشرفت به $text% بروزرسانی شد!";
 
       if ($text == 100) {
-         $stmt = $pdo->prepare("UPDATE goals SET is_completed = 1 WHERE id = :id AND user_id = :user_id");
+         $stmt = $pdo->prepare("UPDATE goals SET is_completed = 1 WHERE id = :id");
          $stmt->bindValue(':id', $goal_id, PDO::PARAM_INT);
-         $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+         
          $stmt->execute();
          $response .= "\n\n🎉 تبریک! شما به هدف خود رسیدید!";
       }
@@ -919,3 +909,4 @@ function parseGoalDate($input)
 
    return date('Y-m-d', strtotime('+3 months'));
 }
+
