@@ -251,19 +251,7 @@ try {
 
    function handleStart($chat_id, $user_id, $first_name, $last_name, $username)
    {
-      $user = getUser($user_id);
-
-      if (!$user) {
-         // ثبت نام جدید
-         $welcome_text = "🎉 سلام $first_name عزیز!\n\n";
-         $welcome_text .= "به ربات دستیار شخصی خوش آمدید 🤖\n\n";
-         $welcome_text .= "برای شروع، می‌توانید از منوی زیر استفاده کنید یا مستقیماً متن خود را ارسال کنید.";
-
-         insertUser($user_id, $username, $first_name, $last_name, 'completed');
-         showMainMenu($chat_id, $user_id, $welcome_text);
-      } else {
-         showMainMenu($chat_id, $user_id);
-      }
+      showMainMenu($chat_id, $user_id);
    }
 
    // منوی اصلی (بدون نمایش اشتراک پریمیوم)
@@ -566,12 +554,6 @@ try {
    $message = $update['message'] ?? null;
    $callback_query = $update['callback_query'] ?? null;
 
-   if (isset($update['my_chat_member']['new_chat_member']) && $update['my_chat_member']["new_chat_member"]["status"] == 'kicked') {
-      $from_id = $update['my_chat_member']['from']['id'];
-      updateUser($from_id, ['step' => 'kicked bot']);
-      exit;
-   }
-
    if ($message) {
       $chat_id = $message['chat']['id'];
       $user_id = $message['from']['id'];
@@ -584,18 +566,14 @@ try {
          exit;
       }
 
-      // بررسی وجود کاربر
       $user = getUser($user_id);
 
-      // مدیریت دستورات خاص
       if ($text == '/start') {
          handleStart($chat_id, $user_id, $first_name, $last_name, $username);
       } elseif (strpos($text, '/') === 0) {
          showMainMenu($chat_id, $user_id);
       } elseif (!$user && $text != '/start') {
          sendMessage($chat_id, "لطفاً ابتدا /start را بزنید.");
-      } elseif ($user && !isUserRegistered($user)) {
-         handleSteps($chat_id, $user_id, $text, $user);
       } else {
          handleMainCommands($chat_id, $user_id, $text, $user);
       }
@@ -615,3 +593,4 @@ try {
 } catch (\Throwable $th) {
    sendMessage($ADMINS[0], "BUG\n\n" . $th);
 }
+
