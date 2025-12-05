@@ -11,13 +11,10 @@ function showDocumentsMenu($chat_id, $user_id, $message_id)
          SUM(CASE WHEN expire_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY) THEN 1 ELSE 0 END) as expiring_soon,
          SUM(CASE WHEN expire_date > DATE_ADD(CURDATE(), INTERVAL 30 DAY) THEN 1 ELSE 0 END) as valid,
          SUM(CASE WHEN expire_date IS NULL THEN 1 ELSE 0 END) as no_expire
-      FROM documents WHERE user_id = :user_id
+      FROM documents
    ");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
    $stmt->execute();
    $stats = $stmt->fetch();
-
-   // $user = getUser($user_id);
 
    $text = "📑 <b>مدیریت اسناد و مدارک</b>\n\n";
 
@@ -48,10 +45,9 @@ function showDocumentsMenu($chat_id, $user_id, $message_id)
             $stmt = $pdo->prepare("
                SELECT name, DATEDIFF(CURDATE(), expire_date) as days_expired 
                FROM documents 
-               WHERE user_id = :user_id AND expire_date <= CURDATE() 
+               WHERE expire_date <= CURDATE() 
                ORDER BY expire_date ASC LIMIT 3
             ");
-            $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
             $stmt->execute();
             $expired_docs = $stmt->fetchAll();
 
@@ -65,10 +61,9 @@ function showDocumentsMenu($chat_id, $user_id, $message_id)
             $stmt = $pdo->prepare("
                SELECT name, DATEDIFF(expire_date, CURDATE()) as days_left 
                FROM documents 
-               WHERE user_id = :user_id AND expire_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)
+               WHEREexpire_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)
                ORDER BY expire_date ASC LIMIT 3
             ");
-            $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
             $stmt->execute();
             $expiring_docs = $stmt->fetchAll();
 
@@ -176,7 +171,6 @@ function showDocumentsList($chat_id, $user_id, $message_id, $page = 1)
    $sql = "
       SELECT *, DATEDIFF(expire_date, CURDATE()) as days_left
       FROM documents 
-      WHERE user_id = :user_id
       ORDER BY 
          CASE 
             WHEN expire_date IS NULL THEN 2
@@ -188,12 +182,10 @@ function showDocumentsList($chat_id, $user_id, $message_id, $page = 1)
    ";
 
    $stmt = $pdo->prepare($sql);
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
    $stmt->execute();
    $documents = $stmt->fetchAll();
 
-   $stmt = $pdo->prepare("SELECT COUNT(*) FROM documents WHERE user_id = :user_id");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   $stmt = $pdo->prepare("SELECT COUNT(*) FROM documents");
    $stmt->execute();
    $total = $stmt->fetchColumn();
 
@@ -414,10 +406,9 @@ function saveDocumentFile($chat_id, $user_id, $message)
 
    // ذخیره سند
    $stmt = $pdo->prepare("
-      INSERT INTO documents (user_id, name, expire_date, file_id, file_type, file_size, created_at) 
-      VALUES (:user_id, :name, :expire_date, :file_id, :file_type, :file_size, NOW())
+      INSERT INTO documents (name, expire_date, file_id, file_type, file_size, created_at) 
+      VALUES (:name, :expire_date, :file_id, :file_type, :file_size, NOW())
    ");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
    $stmt->bindValue(':name', $temp_data['name'], PDO::PARAM_STR);
    $stmt->bindValue(':expire_date', $temp_data['expire_date'], PDO::PARAM_STR);
    $stmt->bindValue(':file_id', $file_id, PDO::PARAM_STR);
@@ -465,9 +456,8 @@ function viewDocument($chat_id, $user_id, $doc_id, $message_id)
 {
    global $pdo;
 
-   $stmt = $pdo->prepare("SELECT *, DATEDIFF(expire_date, CURDATE()) as days_left FROM documents WHERE id = :id AND user_id = :user_id");
+   $stmt = $pdo->prepare("SELECT *, DATEDIFF(expire_date, CURDATE()) as days_left FROM documents WHERE id = :id");
    $stmt->bindValue(':id', $doc_id, PDO::PARAM_INT);
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
    $stmt->execute();
    $doc = $stmt->fetch();
 
@@ -566,9 +556,8 @@ function confirmDeleteDocument($chat_id, $user_id, $doc_id, $message_id)
 {
    global $pdo;
 
-   $stmt = $pdo->prepare("SELECT name FROM documents WHERE id = :id AND user_id = :user_id");
+   $stmt = $pdo->prepare("SELECT name FROM documents WHERE id = :id");
    $stmt->bindValue(':id', $doc_id, PDO::PARAM_INT);
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
    $stmt->execute();
    $doc = $stmt->fetch();
 
@@ -598,9 +587,8 @@ function deleteDocument($chat_id, $user_id, $doc_id, $message_id)
 {
    global $pdo;
 
-   $stmt = $pdo->prepare("DELETE FROM documents WHERE id = :id AND user_id = :user_id");
+   $stmt = $pdo->prepare("DELETE FROM documents WHERE id = :id");
    $stmt->bindValue(':id', $doc_id, PDO::PARAM_INT);
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
    if ($stmt->execute()) {
       $text = "✅ سند با موفقیت حذف شد.";
 
@@ -636,3 +624,4 @@ function validatePersianDate($date_str)
 
    return false;
 }
+
