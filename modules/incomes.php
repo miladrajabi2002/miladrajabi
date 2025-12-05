@@ -24,6 +24,7 @@ function showIncomesMenu($chat_id, $user_id, $message_id = null)
             ['text' => '📋 لیست کامل', 'callback_data' => 'income_list_all'],
             ['text' => '📊 گزارش تفصیلی', 'callback_data' => 'income_report_detailed']
          ],
+         [['text' => '📅 دریافتی‌های این ماه', 'callback_data' => 'income_monthly_payments']],
          [['text' => '🏠 بازگشت به منوی اصلی', 'callback_data' => 'back_main']]
       ]
    ];
@@ -137,6 +138,140 @@ function generateIncomeReport()
 }
 
 // ───────────────────────────────────────────────────────────────
+// نمایش دریافتی‌های ماه جاری براساس روز پرداخت
+// ───────────────────────────────────────────────────────────────
+function showMonthlyPayments($chat_id, $user_id, $message_id)
+{
+   global $pdo;
+   
+   $current_day = (int)date('d');
+   $persian_month = jdate('F Y');
+   
+   // دریافت لیست مشتریان فعال با روز پرداخت
+   $stmt = $pdo->prepare("SELECT * FROM incomes 
+      WHERE is_active = 1 AND payment_day IS NOT NULL
+      ORDER BY payment_day ASC");
+   $stmt->execute();
+   $incomes = $stmt->fetchAll();
+   
+   if (empty($incomes)) {
+      $text = "📅 <b>دریافتی‌های $persian_month</b>\n\n";
+      $text .= "❌ هیچ مشتری با روز پرداخت مشخص ثبت نشده است.";
+      
+      $keyboard = [
+         'inline_keyboard' => [
+            [['text' => '🔙 بازگشت', 'callback_data' => 'incomes']]
+         ]
+      ];
+      
+      editMessage($chat_id, $message_id, $text, $keyboard);
+      return;
+   }
+   
+   // گروه‌بندی براساس وضعیت پرداخت
+   $paid = [];
+   $due_soon = [];
+   $overdue = [];
+   $upcoming = [];
+   
+   foreach ($incomes as $income) {
+      $payment_day = (int)$income['payment_day'];
+      
+      if ($payment_day < $current_day) {
+         $paid[] = $income;
+      } elseif ($payment_day == $current_day) {
+         $due_soon[] = $income;
+      } elseif ($payment_day <= $current_day + 3) {
+         $due_soon[] = $income;
+      } else {
+         $upcoming[] = $income;
+      }
+   }
+   
+   $text = "📅 <b>دریافتی‌های $persian_month</b>\n";
+   $text .= "📍 امروز: " . jdate('j') . " $persian_month\n\n";
+   
+   // دریافتی‌های امروز/این هفته
+   if (!empty($due_soon)) {
+      $text .= "🔔 <b>دریافتی نزدیک (" . count($due_soon) . "):</b>\n";
+      foreach ($due_soon as $income) {
+         $text .= formatIncomePaymentLine($income, $current_day);
+      }
+      $text .= "\n";
+   }
+   
+   // پرداخت‌های آتی
+   if (!empty($upcoming)) {
+      $text .= "⏰ <b>دریافتی‌های آتی (" . count($upcoming) . "):</b>\n";
+      foreach ($upcoming as $income) {
+         $text .= formatIncomePaymentLine($income, $current_day);
+      }
+      $text .= "\n";
+   }
+   
+   // پرداخت‌های انجام شده
+   if (!empty($paid)) {
+      $text .= "✅ <b>دریافت شده (" . count($paid) . "):</b>\n";
+      foreach ($paid as $income) {
+         $text .= formatIncomePaymentLine($income, $current_day);
+      }
+   }
+   
+   // محاسبه جمع کل
+   $total = array_sum(array_column($incomes, 'monthly_amount'));
+   $text .= "\n💰 <b>جمع کل این ماه:</b> " . number_format($total) . " تومان";
+   
+   $keyboard = [
+      'inline_keyboard' => [
+         [['text' => '🔙 بازگشت', 'callback_data' => 'incomes']]
+      ]
+   ];
+   
+   editMessage($chat_id, $message_id, $text, $keyboard);
+}
+
+// ───────────────────────────────────────────────────────────────
+// فرمت کردن خط دریافتی برای نمایش
+// ───────────────────────────────────────────────────────────────
+function formatIncomePaymentLine($income, $current_day)
+{
+   $payment_day = (int)$income['payment_day'];
+   $amount = number_format($income['monthly_amount']);
+   
+   // ایجاد لینک برای نام مشتری
+   $client_display = $income['client_name'];
+   if (!empty($income['client_username'])) {
+      $username = str_replace('@', '', $income['client_username']);
+      $client_display = "<a href='https://t.me/$username'>" . $income['client_name'] . "</a>";
+   }
+   
+   // ایکون وضعیت
+   if ($payment_day < $current_day) {
+      $icon = '✅';
+      $status = "";
+   } elseif ($payment_day == $current_day) {
+      $icon = '🔴';
+      $status = " (امروز)";
+   } else {
+      $icon = '⏰';
+      $days_left = $payment_day - $current_day;
+      $status = " ($days_left روز دیگر)";
+   }
+   
+   $line = "$icon $client_display - $amount ت";
+   $line .= "\n   📅 روز $payment_day" . "$status";
+   
+   // اضافه کردن لینک ربات/سایت
+   if (!empty($income['bot_url'])) {
+      $line .= "\n   🔗 <a href='" . $income['bot_url'] . "'>لینک</a>";
+   }
+   
+   $line .= "\n";
+   
+   return $line;
+}
+
+// ───────────────────────────────────────────────────────────────
 // نمایش لیست تمام منابع درآمد
 // ───────────────────────────────────────────────────────────────
 function showIncomesList($chat_id, $user_id, $message_id, $filter = 'all', $sort = 'amount')
@@ -183,9 +318,17 @@ function showIncomesList($chat_id, $user_id, $message_id, $filter = 'all', $sort
          $months = calculateMonthsDiff($income['start_date'], date('Y-m-d'));
          $total = $income['monthly_amount'] * $months;
          
-         $text .= "\n" . ($idx + 1) . "️⃣ <b>" . $income['client_name'] . "</b>\n";
+         $text .= "\n" . ($idx + 1) . "️⃣ <b>" . $income['client_name'] . "</b>";
+         if (!empty($income['client_username'])) {
+            $username = str_replace('@', '', $income['client_username']);
+            $text .= " (<a href='https://t.me/$username'>@$username</a>)";
+         }
+         $text .= "\n";
          $text .= "   🛠 " . $income['service_type'] . "\n";
          $text .= "   💵 " . number_format($income['monthly_amount']) . " تومان/ماه\n";
+         if ($income['payment_day']) {
+            $text .= "   📅 روز پرداخت: " . $income['payment_day'] . " هر ماه\n";
+         }
          $text .= "   📅 از: " . jdate('Y/m/d', strtotime($income['start_date'])) . " ($months ماه)\n";
          $text .= "   💰 کل درآمد: " . number_format($total) . " تومان\n";
       }
@@ -194,9 +337,6 @@ function showIncomesList($chat_id, $user_id, $message_id, $filter = 'all', $sort
    if (!empty($inactive)) {
       $text .= "\n\n❌ <b>غیرفعال (" . count($inactive) . "):</b>\n";
       foreach ($inactive as $idx => $income) {
-         $months = calculateMonthsDiff($income['start_date'], date('Y-m-d'));
-         $total = $income['monthly_amount'] * $months;
-         
          $text .= "\n" . ($idx + 1) . "️⃣ <b>" . $income['client_name'] . "</b>\n";
          $text .= "   💵 " . number_format($income['monthly_amount']) . " تومان/ماه\n";
          $text .= "   📅 از: " . jdate('Y/m/d', strtotime($income['start_date'])) . "\n";
@@ -258,13 +398,32 @@ function showIncomeDetails($chat_id, $user_id, $message_id, $income_id)
    $status = $income['is_active'] ? '✅ فعال' : '❌ غیرفعال';
    
    $text = "🔍 <b>جزئیات منبع درآمد</b>\n\n";
-   $text .= "👤 <b>مشتری:</b> " . $income['client_name'] . "\n";
+   $text .= "👤 <b>مشتری:</b> " . $income['client_name'];
+   
+   // اضافه کردن یوزرنیم با لینک
+   if (!empty($income['client_username'])) {
+      $username = str_replace('@', '', $income['client_username']);
+      $text .= " (<a href='https://t.me/$username'>@$username</a>)";
+   }
+   $text .= "\n";
+   
    $text .= "🛠 <b>خدمات:</b> " . $income['service_type'] . "\n";
    $text .= "💵 <b>مبلغ ماهانه:</b> " . number_format($income['monthly_amount']) . " تومان\n";
+   
+   // نمایش روز پرداخت
+   if ($income['payment_day']) {
+      $text .= "📅 <b>روز پرداخت:</b> " . $income['payment_day'] . " هر ماه\n";
+   }
+   
    $text .= "📅 <b>شروع همکاری:</b> " . jdate('Y/m/d', strtotime($income['start_date'])) . "\n";
    $text .= "⏱ <b>مدت همکاری:</b> $months ماه\n";
    $text .= "💰 <b>کل درآمد دریافتی:</b> " . number_format($total) . " تومان\n";
    $text .= "📊 <b>وضعیت:</b> $status\n";
+   
+   // نمایش لینک ربات/سایت
+   if (!empty($income['bot_url'])) {
+      $text .= "\n🔗 <b>لینک:</b> <a href='" . $income['bot_url'] . "'>" . $income['bot_url'] . "</a>\n";
+   }
    
    if ($income['description']) {
       $text .= "\n📝 <b>توضیحات:</b>\n" . $income['description'];
@@ -405,9 +564,20 @@ function processIncomeForm($chat_id, $user_id, $text, $step)
          $temp_data['client_name'] = trim($text);
          updateUser($user_id, [
             'temp_reminder' => json_encode($temp_data),
+            'step' => 'income_add_username'
+         ]);
+         sendMessage($chat_id, "مرحله 2️⃣: یوزرنیم تلگرام مشتری را وارد کنید:\n(برای رد کردن، 'رد' یا '-' بنویسید)");
+         break;
+         
+      case 'income_add_username':
+         if ($text != 'رد' && $text != '-') {
+            $temp_data['client_username'] = trim($text);
+         }
+         updateUser($user_id, [
+            'temp_reminder' => json_encode($temp_data),
             'step' => 'income_add_service'
          ]);
-         sendMessage($chat_id, "مرحله 2️⃣: نوع خدمات را وارد کنید:\n(مثال: پشتیبانی سرور، هاست، VPS، ...)");
+         sendMessage($chat_id, "مرحله 3️⃣: نوع خدمات را وارد کنید:\n(مثال: پشتیبانی سرور، هاست، VPS، ...)");
          break;
          
       case 'income_add_service':
@@ -416,7 +586,7 @@ function processIncomeForm($chat_id, $user_id, $text, $step)
             'temp_reminder' => json_encode($temp_data),
             'step' => 'income_add_amount'
          ]);
-         sendMessage($chat_id, "مرحله 3️⃣: مبلغ ماهانه را وارد کنید (به تومان):\n(مثال: 5000000)");
+         sendMessage($chat_id, "مرحله 4️⃣: مبلغ ماهانه را وارد کنید (به تومان):\n(مثال: 5000000)");
          break;
          
       case 'income_add_amount':
@@ -428,9 +598,25 @@ function processIncomeForm($chat_id, $user_id, $text, $step)
          $temp_data['monthly_amount'] = $amount;
          updateUser($user_id, [
             'temp_reminder' => json_encode($temp_data),
+            'step' => 'income_add_payment_day'
+         ]);
+         sendMessage($chat_id, "مرحله 5️⃣: روز پرداخت ماهانه را وارد کنید (1-31):\n(مثال: 15 یعنی 15ام هر ماه)\n(برای رد کردن، 'رد' یا '-' بنویسید)");
+         break;
+         
+      case 'income_add_payment_day':
+         if ($text != 'رد' && $text != '-') {
+            $day = preg_replace('/[^0-9]/', '', $text);
+            if (!is_numeric($day) || $day < 1 || $day > 31) {
+               sendMessage($chat_id, "❌ لطفاً یک عدد بین 1 تا 31 وارد کنید.");
+               return;
+            }
+            $temp_data['payment_day'] = $day;
+         }
+         updateUser($user_id, [
+            'temp_reminder' => json_encode($temp_data),
             'step' => 'income_add_date'
          ]);
-         sendMessage($chat_id, "مرحله 4️⃣: تاریخ شروع همکاری را وارد کنید:\n(مثال: 1404/09/05 یا 2025-12-05)");
+         sendMessage($chat_id, "مرحله 6️⃣: تاریخ شروع همکاری را وارد کنید:\n(مثال: 1404/09/05 یا 2025-12-05)");
          break;
          
       case 'income_add_date':
@@ -442,9 +628,20 @@ function processIncomeForm($chat_id, $user_id, $text, $step)
          $temp_data['start_date'] = $due_date;
          updateUser($user_id, [
             'temp_reminder' => json_encode($temp_data),
+            'step' => 'income_add_bot_url'
+         ]);
+         sendMessage($chat_id, "مرحله 7️⃣: لینک ربات/کانال/سایت مشتری:\n(مثال: https://t.me/botname یا http://example.com)\n(برای رد کردن، 'رد' یا '-' بنویسید)");
+         break;
+         
+      case 'income_add_bot_url':
+         if ($text != 'رد' && $text != '-') {
+            $temp_data['bot_url'] = trim($text);
+         }
+         updateUser($user_id, [
+            'temp_reminder' => json_encode($temp_data),
             'step' => 'income_add_description'
          ]);
-         sendMessage($chat_id, "مرحله 5️⃣: توضیحات (اختیاری):\n(برای رد کردن، 'رد' یا '-' بنویسید)");
+         sendMessage($chat_id, "مرحله 8️⃣: توضیحات (اختیاری):\n(برای رد کردن، 'رد' یا '-' بنویسید)");
          break;
          
       case 'income_add_description':
@@ -455,8 +652,11 @@ function processIncomeForm($chat_id, $user_id, $text, $step)
          break;
          
       case 'income_edit_name':
+      case 'income_edit_username':
       case 'income_edit_service':
       case 'income_edit_amount':
+      case 'income_edit_payment_day':
+      case 'income_edit_bot_url':
       case 'income_edit_description':
          $income_id = $temp_data['editing_id'];
          $field = str_replace('income_edit_', '', $step);
@@ -468,12 +668,27 @@ function processIncomeForm($chat_id, $user_id, $text, $step)
                sendMessage($chat_id, "❌ لطفاً یک عدد معتبر وارد کنید.");
                return;
             }
+         } elseif ($field == 'payment_day') {
+            if ($text == 'رد' || $text == '-') {
+               $value = null;
+            } else {
+               $value = preg_replace('/[^0-9]/', '', $text);
+               if (!is_numeric($value) || $value < 1 || $value > 31) {
+                  sendMessage($chat_id, "❌ لطفاً یک عدد بین 1 تا 31 وارد کنید.");
+                  return;
+               }
+            }
+         } elseif ($text == 'رد' || $text == '-') {
+            $value = null;
          }
          
          $field_map = [
             'name' => 'client_name',
+            'username' => 'client_username',
             'service' => 'service_type',
             'amount' => 'monthly_amount',
+            'payment_day' => 'payment_day',
+            'bot_url' => 'bot_url',
             'description' => 'description'
          ];
          
@@ -498,10 +713,26 @@ function showIncomePreview($chat_id, $user_id, $data)
    updateUser($user_id, ['step' => 'completed']);
    
    $text = "✅ <b>پیش‌نمایش منبع درآمد جدید:</b>\n\n";
-   $text .= "👤 <b>مشتری:</b> " . $data['client_name'] . "\n";
+   $text .= "👤 <b>مشتری:</b> " . $data['client_name'];
+   
+   if (!empty($data['client_username'])) {
+      $username = str_replace('@', '', $data['client_username']);
+      $text .= " (@$username)";
+   }
+   $text .= "\n";
+   
    $text .= "🛠 <b>خدمات:</b> " . $data['service_type'] . "\n";
    $text .= "💵 <b>مبلغ:</b> " . number_format($data['monthly_amount']) . " تومان/ماه\n";
+   
+   if (!empty($data['payment_day'])) {
+      $text .= "📅 <b>روز پرداخت:</b> " . $data['payment_day'] . " هر ماه\n";
+   }
+   
    $text .= "📅 <b>شروع:</b> " . jdate('Y/m/d', strtotime($data['start_date'])) . "\n";
+   
+   if (!empty($data['bot_url'])) {
+      $text .= "🔗 <b>لینک:</b> " . $data['bot_url'] . "\n";
+   }
    
    if (!empty($data['description'])) {
       $text .= "📝 <b>توضیحات:</b> " . $data['description'] . "\n";
@@ -530,14 +761,17 @@ function saveIncome($chat_id, $user_id, $message_id)
    $data = json_decode($user['temp_reminder'], true);
    
    $stmt = $pdo->prepare("INSERT INTO incomes 
-      (client_name, service_type, monthly_amount, start_date, description, is_active) 
-      VALUES (?, ?, ?, ?, ?, 1)");
+      (client_name, client_username, service_type, monthly_amount, start_date, payment_day, bot_url, description, is_active) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)");
    
    $stmt->execute([
       $data['client_name'],
+      $data['client_username'] ?? null,
       $data['service_type'],
       $data['monthly_amount'],
       $data['start_date'],
+      $data['payment_day'] ?? null,
+      $data['bot_url'] ?? null,
       $data['description'] ?? null
    ]);
    
@@ -559,8 +793,11 @@ function showEditMenu($chat_id, $user_id, $message_id, $income_id)
    $keyboard = [
       'inline_keyboard' => [
          [['text' => '👤 تغییر نام مشتری', 'callback_data' => 'income_edit_name_' . $income_id]],
+         [['text' => '📱 تغییر یوزرنیم', 'callback_data' => 'income_edit_username_' . $income_id]],
          [['text' => '🛠 تغییر نوع خدمات', 'callback_data' => 'income_edit_service_' . $income_id]],
          [['text' => '💵 تغییر مبلغ ماهانه', 'callback_data' => 'income_edit_amount_' . $income_id]],
+         [['text' => '📅 تغییر روز پرداخت', 'callback_data' => 'income_edit_payment_day_' . $income_id]],
+         [['text' => '🔗 تغییر لینک', 'callback_data' => 'income_edit_bot_url_' . $income_id]],
          [['text' => '📝 تغییر توضیحات', 'callback_data' => 'income_edit_description_' . $income_id]],
          [['text' => '🔙 بازگشت', 'callback_data' => 'income_view_' . $income_id]]
       ]
@@ -646,6 +883,8 @@ function handleIncomeCallback($chat_id, $user_id, $data, $message_id)
       showIncomesList($chat_id, $user_id, $message_id, 'all', 'amount');
    } elseif ($data == 'income_sort_date') {
       showIncomesList($chat_id, $user_id, $message_id, 'all', 'date');
+   } elseif ($data == 'income_monthly_payments') {
+      showMonthlyPayments($chat_id, $user_id, $message_id);
    } elseif ($data == 'income_report_detailed') {
       showDetailedReport($chat_id, $user_id, $message_id, 0);
    } elseif (strpos($data, 'income_report_month_') === 0) {
@@ -664,6 +903,13 @@ function handleIncomeCallback($chat_id, $user_id, $data, $message_id)
          'temp_reminder' => json_encode(['editing_id' => $income_id])
       ]);
       editMessage($chat_id, $message_id, "نام جدید مشتری را وارد کنید:", null);
+   } elseif (strpos($data, 'income_edit_username_') === 0) {
+      $income_id = str_replace('income_edit_username_', '', $data);
+      updateUser($user_id, [
+         'step' => 'income_edit_username',
+         'temp_reminder' => json_encode(['editing_id' => $income_id])
+      ]);
+      editMessage($chat_id, $message_id, "یوزرنیم جدید را وارد کنید:\n(برای حذف، 'رد' بنویسید)", null);
    } elseif (strpos($data, 'income_edit_service_') === 0) {
       $income_id = str_replace('income_edit_service_', '', $data);
       updateUser($user_id, [
@@ -678,13 +924,27 @@ function handleIncomeCallback($chat_id, $user_id, $data, $message_id)
          'temp_reminder' => json_encode(['editing_id' => $income_id])
       ]);
       editMessage($chat_id, $message_id, "مبلغ ماهانه جدید را وارد کنید:", null);
+   } elseif (strpos($data, 'income_edit_payment_day_') === 0) {
+      $income_id = str_replace('income_edit_payment_day_', '', $data);
+      updateUser($user_id, [
+         'step' => 'income_edit_payment_day',
+         'temp_reminder' => json_encode(['editing_id' => $income_id])
+      ]);
+      editMessage($chat_id, $message_id, "روز پرداخت جدید (1-31) را وارد کنید:\n(برای حذف، 'رد' بنویسید)", null);
+   } elseif (strpos($data, 'income_edit_bot_url_') === 0) {
+      $income_id = str_replace('income_edit_bot_url_', '', $data);
+      updateUser($user_id, [
+         'step' => 'income_edit_bot_url',
+         'temp_reminder' => json_encode(['editing_id' => $income_id])
+      ]);
+      editMessage($chat_id, $message_id, "لینک جدید را وارد کنید:\n(برای حذف، 'رد' بنویسید)", null);
    } elseif (strpos($data, 'income_edit_description_') === 0) {
       $income_id = str_replace('income_edit_description_', '', $data);
       updateUser($user_id, [
          'step' => 'income_edit_description',
          'temp_reminder' => json_encode(['editing_id' => $income_id])
       ]);
-      editMessage($chat_id, $message_id, "توضیحات جدید را وارد کنید:", null);
+      editMessage($chat_id, $message_id, "توضیحات جدید را وارد کنید:\n(برای حذف، 'رد' بنویسید)", null);
    } elseif (strpos($data, 'income_activate_') === 0) {
       $income_id = str_replace('income_activate_', '', $data);
       toggleIncomeStatus($chat_id, $user_id, $message_id, $income_id, true);
