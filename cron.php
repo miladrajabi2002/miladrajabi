@@ -17,10 +17,12 @@ try {
    checkAndRunTask('birthday_reminders', 'processBirthdayReminders');
    checkAndRunTask('birthday_upcoming', 'processUpcomingBirthdays');
    checkAndRunTask('contact_reminders', 'processContactReminders');
-   checkAndRunTask('cleanup_old_data', 'cleanupOldData');
 } catch (Exception $th) {
    sendMessage($ADMINS[0], "BUG CRON\n\n" . $th->getMessage());
 }
+
+define('SINGLE_USER_ID', 1253939828);
+
 
 /**
  * بررسی و اجرای تسک در صورت رسیدن زمان
@@ -70,26 +72,25 @@ function checkAndRunTask($taskName, $functionName)
    }
 }
 
+
 /**
  * پردازش یادآورهای عادی
  */
 function processReminders()
 {
    global $pdo;
-
    $stmt = $pdo->prepare("
-        SELECT r.*, u.user_id 
-        FROM reminders r 
-        JOIN users u ON r.user_id = u.user_id 
-        WHERE r.is_active = 1 
-        AND r.reminder_time <= NOW() 
+        SELECT r.*
+        FROM reminders r
+        WHERE r.is_active = 1
+        AND r.reminder_time <= NOW()
         AND r.reminder_time >= DATE_SUB(NOW(), INTERVAL 10 MINUTE)
     ");
    $stmt->execute();
    $reminders = $stmt->fetchAll();
 
    foreach ($reminders as $reminder) {
-      $text = "🔔 <b>یادآوری</b>\n\n";
+      $text = "🔔 یادآوری\n\n";
       $text .= "📝 " . htmlspecialchars($reminder['title']) . "\n\n";
       $text .= "⏰ زمان: " . jdate('Y/m/d H:i', strtotime($reminder['reminder_time']));
 
@@ -105,8 +106,7 @@ function processReminders()
          ]
       ];
 
-      sendMessage($reminder['user_id'], $text, $keyboard);
-
+      sendMessage(SINGLE_USER_ID, $text, $keyboard);
 
       if ($reminder['repeat_type'] == 'once') {
          // غیرفعال کردن یادآور یکبار
@@ -115,7 +115,6 @@ function processReminders()
       } else {
          // محاسبه زمان بعدی
          $next_time = calculateNextReminderTime($reminder['reminder_time'], $reminder['repeat_type']);
-
          $stmt = $pdo->prepare("UPDATE reminders SET reminder_time = ? WHERE id = ?");
          $stmt->execute([$next_time, $reminder['id']]);
       }
@@ -124,8 +123,10 @@ function processReminders()
    }
 }
 
+
+
 /**
- * پردازش یادآوری‌های سررسید مالی (روزانه)
+ * پردازش یادآوریهای سررسید مالی (روزانه)
  */
 function processFinancialDueReminders()
 {
@@ -136,12 +137,11 @@ function processFinancialDueReminders()
       return;
    }
 
-   // بدهی‌ها و طلب‌های 3 روز مانده
+   // بدهیها و طلبهای 3 روز مانده
    $stmt = $pdo->prepare("
-        SELECT dc.*, u.user_id 
+        SELECT dc.*
         FROM finances dc
-        JOIN users u ON dc.user_id = u.user_id 
-        WHERE dc.is_paid = 0 
+        WHERE dc.is_paid = 0
         AND dc.due_date IS NOT NULL
         AND DATE(dc.due_date) = DATE_ADD(CURDATE(), INTERVAL 3 DAY)
     ");
@@ -154,12 +154,12 @@ function processFinancialDueReminders()
       $amount = number_format($item['amount']);
       $due_date = jdate('Y/m/d', strtotime($item['due_date']));
 
-      $text = "⚠️ <b>یادآوری سررسید</b>\n\n";
-      $text .= "$type_icon <b>نوع:</b> $type_title\n";
-      $text .= "📋 <b>عنوان:</b> " . htmlspecialchars($item['title']) . "\n";
-      $text .= "👤 <b>طرف حساب:</b> " . htmlspecialchars($item['person_name']) . "\n";
-      $text .= "💰 <b>مبلغ:</b> $amount تومان\n";
-      $text .= "📅 <b>سررسید:</b> $due_date (3 روز دیگر)\n\n";
+      $text = "⚠️ یادآوری سررسید\n\n";
+      $text .= "$type_icon نوع: $type_title\n";
+      $text .= "📋 عنوان: " . htmlspecialchars($item['title']) . "\n";
+      $text .= "👤 طرف حساب: " . htmlspecialchars($item['person_name']) . "\n";
+      $text .= "💰 مبلغ: $amount تومان\n";
+      $text .= "📅 سررسید: $due_date (3 روز دیگر)\n\n";
       $text .= "💡 لطفاً برای تسویه اقدام کنید.";
 
       $keyboard = [
@@ -171,16 +171,15 @@ function processFinancialDueReminders()
          ]
       ];
 
-      sendMessage($item['user_id'], $text, $keyboard);
+      sendMessage(SINGLE_USER_ID, $text, $keyboard);
       usleep(100000);
    }
 
-   // چک‌های فردا سررسید
+   // چکهای فردا سررسید
    $stmt = $pdo->prepare("
-        SELECT c.*, u.user_id 
+        SELECT c.*
         FROM checks c
-        JOIN users u ON c.user_id = u.user_id 
-        WHERE c.status = 'pending' 
+        WHERE c.status = 'pending'
         AND DATE(c.due_date) = DATE_ADD(CURDATE(), INTERVAL 1 DAY)
     ");
    $stmt->execute();
@@ -192,20 +191,20 @@ function processFinancialDueReminders()
       $amount = number_format($check['amount']);
       $due_date = jdate('Y/m/d', strtotime($check['due_date']));
 
-      $text = "🚨 <b>هشدار سررسید چک</b>\n\n";
-      $text .= "$type_icon <b>نوع:</b> چک $type_title\n";
-      $text .= "👤 <b>صاحب حساب:</b> " . htmlspecialchars($check['account_holder']) . "\n";
-      $text .= "💰 <b>مبلغ:</b> $amount تومان\n";
+      $text = "🚨 هشدار سررسید چک\n\n";
+      $text .= "$type_icon نوع: چک $type_title\n";
+      $text .= "👤 صاحب حساب: " . htmlspecialchars($check['account_holder']) . "\n";
+      $text .= "💰 مبلغ: $amount تومان\n";
 
       if ($check['check_number']) {
-         $text .= "🔢 <b>شماره چک:</b> " . htmlspecialchars($check['check_number']) . "\n";
+         $text .= "🔢 شماره چک: " . htmlspecialchars($check['check_number']) . "\n";
       }
 
       if ($check['bank_name']) {
-         $text .= "🏦 <b>بانک:</b> " . htmlspecialchars($check['bank_name']) . "\n";
+         $text .= "🏦 بانک: " . htmlspecialchars($check['bank_name']) . "\n";
       }
 
-      $text .= "📅 <b>سررسید:</b> $due_date (فردا!)\n\n";
+      $text .= "📅 سررسید: $due_date (فردا!)\n\n";
 
       if ($check['type'] === 'received') {
          $text .= "💡 فردا باید این چک را به بانک ببرید.";
@@ -219,13 +218,14 @@ function processFinancialDueReminders()
          ]
       ];
 
-      sendMessage($check['user_id'], $text, $keyboard);
+      sendMessage(SINGLE_USER_ID, $text, $keyboard);
       usleep(100000);
    }
 }
 
+
 /**
- * پردازش چک‌های سررسید گذشته (روزانه)
+ * پردازش چکهای سررسید گذشته (روزانه)
  */
 function processOverdueChecks()
 {
@@ -237,33 +237,24 @@ function processOverdueChecks()
    }
 
    $today = date('Y-m-d');
-
    $stmt = $pdo->prepare("
-        SELECT c.*, u.user_id, u.first_name 
+        SELECT c.*
         FROM checks c
-        JOIN users u ON c.user_id = u.user_id 
-        WHERE c.status = 'pending' 
+        WHERE c.status = 'pending'
         AND c.due_date < CURDATE()
         AND (c.last_overdue_reminder IS NULL OR c.last_overdue_reminder < ?)
-        ORDER BY c.user_id, c.due_date
+        ORDER BY c.due_date
     ");
    $stmt->execute([$today]);
    $overdue_checks = $stmt->fetchAll();
 
-   // گروه‌بندی چک‌ها بر اساس کاربر
-   $user_checks = [];
-   foreach ($overdue_checks as $check) {
-      $user_checks[$check['user_id']][] = $check;
-   }
-
-   foreach ($user_checks as $user_id => $checks) {
-      $count = count($checks);
+   if (count($overdue_checks) > 0) {
+      $count = count($overdue_checks);
       $total_amount = 0;
       $details = "";
-      $first_name = $checks[0]['first_name'] ?? 'کاربر';
       $check_ids = [];
 
-      foreach ($checks as $check) {
+      foreach ($overdue_checks as $check) {
          $check_ids[] = $check['id'];
          $total_amount += $check['amount'];
          $type_icon = $check['type'] === 'received' ? '📥' : '📤';
@@ -272,25 +263,24 @@ function processOverdueChecks()
          $days_overdue = ceil((time() - strtotime($check['due_date'])) / (24 * 3600));
 
          $details .= "$type_icon چک $type_title - " . htmlspecialchars($check['account_holder']) . "\n";
-         $details .= "   💰 $amount تومان - ⏰ $days_overdue روز تاخیر\n\n";
+         $details .= "  💰 $amount تومان - ⏰ $days_overdue روز تاخیر\n\n";
       }
 
       $total_formatted = number_format($total_amount);
-
-      $text = "❌ <b>یادآوری روزانه چک‌های سررسید گذشته</b>\n\n";
-      $text .= "سلام $first_name عزیز،\n";
-      $text .= "شما <b>$count چک</b> سررسید گذشته به مبلغ کل <b>$total_formatted تومان</b> دارید:\n\n";
+      $text = "❌ یادآوری روزانه چکهای سررسید گذشته\n\n";
+      $text .= "سلام،\n";
+      $text .= "شما $count چک سررسید گذشته به مبلغ کل $total_formatted تومان دارید:\n\n";
       $text .= $details;
-      $text .= "🔄 لطفاً هرچه سریعتر نسبت به پیگیری و بروزرسانی وضعیت چک‌ها اقدام کنید.";
+      $text .= "🔄 لطفاً هرچه سریعتر نسبت به پیگیری و بروزرسانی وضعیت چکها اقدام کنید.";
 
       $keyboard = [
          'inline_keyboard' => [
-            [['text' => '📋 مشاهده لیست چک‌ها', 'callback_data' => 'finance_checks']],
+            [['text' => '📋 مشاهده لیست چکها', 'callback_data' => 'finance_checks']],
             [['text' => '🏠 منوی اصلی', 'callback_data' => 'back_main']]
          ]
       ];
 
-      sendMessage($user_id, $text, $keyboard);
+      sendMessage(SINGLE_USER_ID, $text, $keyboard);
 
       // آپدیت کردن تاریخ آخرین یادآوری
       if (!empty($check_ids)) {
@@ -303,6 +293,7 @@ function processOverdueChecks()
       usleep(100000);
    }
 }
+
 
 /**
  * پردازش انقضای اسناد امروز
@@ -318,9 +309,8 @@ function processDocumentExpiry()
 
    // اسناد منقضی شده امروز
    $stmt = $pdo->prepare("
-        SELECT d.*, u.user_id, u.first_name 
+        SELECT d.*
         FROM documents d
-        JOIN users u ON d.user_id = u.user_id 
         WHERE d.expire_date = CURDATE()
         AND (d.last_reminder_sent IS NULL OR d.last_reminder_sent < CURDATE())
     ");
@@ -328,9 +318,8 @@ function processDocumentExpiry()
    $expiring_today = $stmt->fetchAll();
 
    foreach ($expiring_today as $doc) {
-      $text = "🚨 <b>هشدار انقضای سند</b>\n\n";
-      $text .= "📄 سند «" . htmlspecialchars($doc['name']) . "» امروز منقضی می‌شود!\n\n";
-
+      $text = "🚨 هشدار انقضای سند\n\n";
+      $text .= "📄 سند «" . htmlspecialchars($doc['name']) . "» امروز منقضی میشود!\n\n";
       $text .= "📅 تاریخ انقضا: " . jdate('Y/m/d', strtotime($doc['expire_date'])) . "\n\n";
       $text .= "⚠️ لطفاً هرچه سریعتر برای تمدید اقدام کنید.";
 
@@ -341,7 +330,7 @@ function processDocumentExpiry()
          ]
       ];
 
-      sendMessage($doc['user_id'], $text, $keyboard);
+      sendMessage(SINGLE_USER_ID, $text, $keyboard);
 
       // بروزرسانی تاریخ ارسال
       $pdo->prepare("UPDATE documents SET last_reminder_sent = CURDATE() WHERE id = ?")
@@ -352,18 +341,16 @@ function processDocumentExpiry()
 
    // اسناد نزدیک انقضا (7 روز مانده)
    $stmt = $pdo->prepare("
-        SELECT d.*, u.user_id, u.first_name 
+        SELECT d.*
         FROM documents d
-        JOIN users u ON d.user_id = u.user_id 
         WHERE d.expire_date = DATE_ADD(CURDATE(), INTERVAL 7 DAY)
     ");
    $stmt->execute();
    $expiring_soon = $stmt->fetchAll();
 
    foreach ($expiring_soon as $doc) {
-      $text = "⚠️ <b>یادآوری انقضای سند</b>\n\n";
-      $text .= "📄 سند «" . htmlspecialchars($doc['name']) . "» تا 7 روز دیگر منقضی می‌شود.\n\n";
-
+      $text = "⚠️ یادآوری انقضای سند\n\n";
+      $text .= "📄 سند «" . htmlspecialchars($doc['name']) . "» تا 7 روز دیگر منقضی میشود.\n\n";
       $text .= "📅 تاریخ انقضا: " . jdate('Y/m/d', strtotime($doc['expire_date'])) . "\n\n";
       $text .= "💡 برای تمدید به موقع اقدام کنید.";
 
@@ -374,10 +361,11 @@ function processDocumentExpiry()
          ]
       ];
 
-      sendMessage($doc['user_id'], $text, $keyboard);
+      sendMessage(SINGLE_USER_ID, $text, $keyboard);
       usleep(100000);
    }
 }
+
 
 /**
  * گزارش روزانه اسناد منقضی شده
@@ -392,31 +380,24 @@ function processExpiredDocumentsDaily()
    }
 
    $stmt = $pdo->prepare("
-        SELECT d.*, u.user_id, u.first_name,
-               DATEDIFF(CURDATE(), d.expire_date) as days_expired
+        SELECT d.*,
+        DATEDIFF(CURDATE(), d.expire_date) as days_expired
         FROM documents d
-        JOIN users u ON d.user_id = u.user_id 
         WHERE d.expire_date < CURDATE()
         AND (d.last_reminder_sent IS NULL OR d.last_reminder_sent < CURDATE())
-        ORDER BY d.user_id, d.expire_date
+        ORDER BY d.expire_date
     ");
    $stmt->execute();
    $expired_docs = $stmt->fetchAll();
 
-   // گروه‌بندی بر اساس کاربر
-   $user_docs = [];
-   foreach ($expired_docs as $doc) {
-      $user_docs[$doc['user_id']][] = $doc;
-   }
-
-   foreach ($user_docs as $user_id => $docs) {
-      if (count($docs) > 5) {
+   if (count($expired_docs) > 0) {
+      if (count($expired_docs) > 5) {
          // خلاصه برای تعداد زیاد
-         $text = "🔴 <b>گزارش اسناد منقضی شده</b>\n\n";
-         $text .= "شما " . count($docs) . " سند منقضی شده دارید:\n\n";
+         $text = "🔴 گزارش اسناد منقضی شده\n\n";
+         $text .= "شما " . count($expired_docs) . " سند منقضی شده دارید:\n\n";
 
          $critical = 0;
-         foreach ($docs as $doc) {
+         foreach ($expired_docs as $doc) {
             if ($doc['days_expired'] > 30) {
                $critical++;
             }
@@ -435,9 +416,8 @@ function processExpiredDocumentsDaily()
          ];
       } else {
          // نمایش جزئیات
-         $text = "🔴 <b>اسناد منقضی شده</b>\n\n";
-
-         foreach ($docs as $doc) {
+         $text = "🔴 اسناد منقضی شده\n\n";
+         foreach ($expired_docs as $doc) {
             $text .= "📄 " . htmlspecialchars($doc['name']);
             if ($doc['type']) {
                $text .= " ({$doc['type']})";
@@ -455,10 +435,10 @@ function processExpiredDocumentsDaily()
          ];
       }
 
-      sendMessage($user_id, $text, $keyboard);
+      sendMessage(SINGLE_USER_ID, $text, $keyboard);
 
       // بروزرسانی تاریخ ارسال
-      $doc_ids = array_column($docs, 'id');
+      $doc_ids = array_column($expired_docs, 'id');
       $placeholders = implode(',', array_fill(0, count($doc_ids), '?'));
       $stmt = $pdo->prepare("UPDATE documents SET last_reminder_sent = CURDATE() WHERE id IN ($placeholders)");
       $stmt->execute($doc_ids);
@@ -467,8 +447,9 @@ function processExpiredDocumentsDaily()
    }
 }
 
+
 /**
- * ارسال پیام‌های انگیزشی
+ * ارسال پیامهای انگیزشی
  */
 function sendMotivationalMessages()
 {
@@ -479,23 +460,14 @@ function sendMotivationalMessages()
       return;
    }
 
-   $stmt = $pdo->query("
-        SELECT user_id FROM users 
-        WHERE is_premium = 1 
-        AND DATE(last_activity) >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
-    ");
-   $users = $stmt->fetchAll(PDO::FETCH_COLUMN);
-
    $message = getMotivationalMessage();
-
-   foreach ($users as $user_id) {
-      sendMessage($user_id, "🌟 " . $message);
-      usleep(100000);
-   }
+   sendMessage(SINGLE_USER_ID, "🌟 " . $message);
+   usleep(100000);
 }
 
+
 /**
- * یادآوری عادت‌ها در عصر
+ * یادآوری عادتها در عصر
  */
 function processHabitEveningReminders()
 {
@@ -508,29 +480,22 @@ function processHabitEveningReminders()
    }
 
    $stmt = $pdo->prepare("
-        SELECT DISTINCT h.user_id, u.first_name, 
-               COUNT(h.id) as pending_habits,
-               GROUP_CONCAT(h.name SEPARATOR ', ') as habit_names
+        SELECT COUNT(h.id) as pending_habits,
+        GROUP_CONCAT(h.name SEPARATOR ', ') as habit_names
         FROM habits h
-        JOIN users u ON h.user_id = u.user_id
         LEFT JOIN habit_logs hl ON h.id = hl.habit_id AND hl.completed_date = CURDATE()
-        WHERE h.is_active = 1 
+        WHERE h.is_active = 1
         AND hl.id IS NULL
-        AND u.last_activity >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
-        GROUP BY h.user_id
-        HAVING pending_habits > 0
     ");
    $stmt->execute();
-   $users_with_pending_habits = $stmt->fetchAll();
+   $result = $stmt->fetch();
 
-   foreach ($users_with_pending_habits as $user_data) {
-      $user_id = $user_data['user_id'];
-      $first_name = $user_data['first_name'] ?? 'کاربر';
-      $pending_count = $user_data['pending_habits'];
-      $habit_names = $user_data['habit_names'];
+   if ($result && $result['pending_habits'] > 0) {
+      $pending_count = $result['pending_habits'];
+      $habit_names = $result['habit_names'];
 
-      $text = "⏰ <b>یادآوری عادت‌ها</b>\n\n";
-      $text .= "سلام $first_name عزیز!\n";
+      $text = "⏰ یادآوری عادتها\n\n";
+      $text .= "سلام!\n";
       $text .= "شما $pending_count عادت انجام نشده دارید:\n\n";
 
       // نمایش حداکثر 3 عادت اول
@@ -549,19 +514,20 @@ function processHabitEveningReminders()
 
       $keyboard = [
          'inline_keyboard' => [
-            [['text' => '✅ تیک زدن عادت‌ها', 'callback_data' => 'habit_today']],
+            [['text' => '✅ تیک زدن عادتها', 'callback_data' => 'habit_today']],
             [['text' => '📊 مشاهده آمار', 'callback_data' => 'habit_stats']],
             [['text' => '🏠 منوی اصلی', 'callback_data' => 'back_main']]
          ]
       ];
 
-      sendMessage($user_id, $text, $keyboard);
+      sendMessage(SINGLE_USER_ID, $text, $keyboard);
       usleep(100000);
    }
 }
 
+
 /**
- * یادآوری عادت‌های باقی‌مانده - ساعت 23:00
+ * یادآوری عادتهای باقیمانده - ساعت 23:00
  */
 function sendHabitReminders()
 {
@@ -576,45 +542,39 @@ function sendHabitReminders()
    }
 
    try {
-      // پیدا کردن کاربرانی که عادت‌های انجام نشده دارند
+      // پیدا کردن عادتهای انجام نشده
       $stmt = $pdo->prepare("
-            SELECT DISTINCT h.user_id, u.first_name,
-                   COUNT(h.id) as pending_habits,
-                   GROUP_CONCAT(h.name SEPARATOR '، ') as habit_names
+            SELECT COUNT(h.id) as pending_habits,
+            GROUP_CONCAT(h.name SEPARATOR '، ') as habit_names
             FROM habits h
-            JOIN users u ON h.user_id = u.user_id
             LEFT JOIN habit_logs hl ON h.id = hl.habit_id AND hl.completed_date = CURDATE()
-            WHERE h.is_active = 1 
+            WHERE h.is_active = 1
             AND hl.id IS NULL
-            AND u.last_activity >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
-            GROUP BY h.user_id, u.first_name
-            HAVING pending_habits > 0
         ");
       $stmt->execute();
-      $users_with_pending = $stmt->fetchAll();
+      $result = $stmt->fetch();
 
-      foreach ($users_with_pending as $user) {
-         $first_name = $user['first_name'] ?? 'کاربر';
-         $pending_count = $user['pending_habits'];
-         $habit_names = $user['habit_names'];
+      if ($result && $result['pending_habits'] > 0) {
+         $pending_count = $result['pending_habits'];
+         $habit_names = $result['habit_names'];
 
-         // محدود کردن نام عادت‌ها
+         // محدود کردن نام عادتها
          if (mb_strlen($habit_names) > 100) {
             $habit_names = mb_substr($habit_names, 0, 100) . '...';
          }
 
-         $text = "⏰ <b>یادآوری عادت‌های امروز</b>\n\n";
-         $text .= "سلام $first_name عزیز!\n\n";
+         $text = "⏰ یادآوری عادتهای امروز\n\n";
+         $text .= "سلام!\n\n";
          $text .= "🕚 ساعت 23:00 است و هنوز $pending_count عادت باقی مانده:\n\n";
-         $text .= "📋 <b>عادت‌های انجام نشده:</b>\n";
+         $text .= "📋 عادتهای انجام نشده:\n";
          $text .= "• $habit_names\n\n";
-         $text .= "⏰ <b>فقط 1 ساعت تا نیمه‌شب باقی مانده!</b>\n";
-         $text .= "💪 هنوز وقت دارید تا عادت‌هایتان را انجام دهید.";
+         $text .= "⏰ فقط 1 ساعت تا نیمهشب باقی مانده!\n";
+         $text .= "💪 هنوز وقت دارید تا عادتهایتان را انجام دهید.";
 
          $keyboard = [
             'inline_keyboard' => [
                [
-                  ['text' => '✅ تیک زدن عادت‌ها', 'callback_data' => 'habit_today']
+                  ['text' => '✅ تیک زدن عادتها', 'callback_data' => 'habit_today']
                ],
                [
                   ['text' => '📊 مشاهده آمار', 'callback_data' => 'habit_stats']
@@ -622,20 +582,17 @@ function sendHabitReminders()
             ]
          ];
 
-         sendMessage($user['user_id'], $text, $keyboard);
-         usleep(200000); // 0.2 ثانیه تاخیر
-      }
-
-      if (count($users_with_pending) > 0) {
-         error_log("Habit reminders sent to " . count($users_with_pending) . " users at " . date('Y-m-d H:i:s'));
+         sendMessage(SINGLE_USER_ID, $text, $keyboard);
+         error_log("Habit reminder sent at " . date('Y-m-d H:i:s'));
       }
    } catch (Exception $e) {
       error_log("Error in sendHabitReminders: " . $e->getMessage());
    }
 }
 
+
 /**
- * ریست روزانه عادت‌ها - ساعت 00:05
+ * ریست روزانه عادتها - ساعت 00:05
  */
 function resetDailyHabits()
 {
@@ -650,45 +607,39 @@ function resetDailyHabits()
    }
 
    try {
-      // پیدا کردن کاربرانی که دیروز عادت‌های انجام نشده داشتند
+      // پیدا کردن عادتهای انجام نشده دیروز
       $stmt = $pdo->prepare("
-            SELECT DISTINCT h.user_id, u.first_name,
-                   COUNT(h.id) as missed_habits,
-                   GROUP_CONCAT(h.name SEPARATOR '، ') as missed_names
+            SELECT COUNT(h.id) as missed_habits,
+            GROUP_CONCAT(h.name SEPARATOR '، ') as missed_names
             FROM habits h
-            JOIN users u ON h.user_id = u.user_id
             LEFT JOIN habit_logs hl ON h.id = hl.habit_id AND hl.completed_date = DATE_SUB(CURDATE(), INTERVAL 1 DAY)
-            WHERE h.is_active = 1 
+            WHERE h.is_active = 1
             AND hl.id IS NULL
-            AND u.last_activity >= DATE_SUB(CURDATE(), INTERVAL 3 DAY)
-            GROUP BY h.user_id, u.first_name
-            HAVING missed_habits >= 2
         ");
       $stmt->execute();
-      $users_with_missed = $stmt->fetchAll();
+      $result = $stmt->fetch();
 
-      foreach ($users_with_missed as $user) {
-         $first_name = $user['first_name'] ?? 'کاربر';
-         $missed_count = $user['missed_habits'];
-         $missed_names = $user['missed_names'];
+      if ($result && $result['missed_habits'] >= 2) {
+         $missed_count = $result['missed_habits'];
+         $missed_names = $result['missed_names'];
 
-         // محدود کردن نام عادت‌ها
+         // محدود کردن نام عادتها
          if (mb_strlen($missed_names) > 80) {
             $missed_names = mb_substr($missed_names, 0, 80) . '...';
          }
 
-         $text = "🌅 <b>صبح بخیر و شروع روز جدید!</b>\n\n";
-         $text .= "سلام $first_name عزیز!\n\n";
+         $text = "🌅 صبح بخیر و شروع روز جدید!\n\n";
+         $text .= "سلام!\n\n";
          $text .= "📅 امروز " . jdate('l j F Y') . " است.\n\n";
          $text .= "⚠️ دیروز $missed_count عادت انجام نشد:\n";
          $text .= "• $missed_names\n\n";
-         $text .= "💪 <b>امروز روز جدیدی است!</b>\n";
+         $text .= "💪 امروز روز جدیدی است!\n";
          $text .= "🎯 بیایید با انگیزه بیشتری شروع کنیم.";
 
          $keyboard = [
             'inline_keyboard' => [
                [
-                  ['text' => '✅ عادت‌های امروز', 'callback_data' => 'habit_today']
+                  ['text' => '✅ عادتهای امروز', 'callback_data' => 'habit_today']
                ],
                [
                   ['text' => '📊 آمار عملکرد', 'callback_data' => 'habit_stats']
@@ -696,13 +647,13 @@ function resetDailyHabits()
             ]
          ];
 
-         sendMessage($user['user_id'], $text, $keyboard);
-         usleep(250000); // 0.25 ثانیه تاخیر
+         sendMessage(SINGLE_USER_ID, $text, $keyboard);
       }
    } catch (Exception $e) {
       error_log("Error in resetDailyHabits: " . $e->getMessage());
    }
 }
+
 
 /**
  * یادآوری تولدها
@@ -717,9 +668,8 @@ function processBirthdayReminders()
    }
 
    $stmt = $pdo->prepare("
-        SELECT c.*, u.user_id as telegram_id 
+        SELECT c.*
         FROM contacts c
-        JOIN users u ON c.user_id = u.user_id
         WHERE c.birthday IS NOT NULL
         AND DATE_FORMAT(c.birthday, '%m-%d') = DATE_FORMAT(CURDATE(), '%m-%d')
         AND (c.last_birthday_reminder IS NULL OR c.last_birthday_reminder != CURDATE())
@@ -729,8 +679,9 @@ function processBirthdayReminders()
 
    foreach ($birthdays as $contact) {
       $age = calculateAge($contact['birthday']) + 1;
-      $text = "🎂 <b>یادآوری تولد</b>\n\n";
-      $text .= "امروز تولد <b>" . htmlspecialchars($contact['name']) . "</b> است!\n";
+
+      $text = "🎂 یادآوری تولد\n\n";
+      $text .= "امروز تولد " . htmlspecialchars($contact['name']) . " است!\n";
       $text .= "🎉 $age ساله شد\n\n";
 
       if ($contact['phone']) {
@@ -748,7 +699,7 @@ function processBirthdayReminders()
          ]
       ];
 
-      sendMessage($contact['telegram_id'], $text, $keyboard);
+      sendMessage(SINGLE_USER_ID, $text, $keyboard);
 
       // ثبت ارسال یادآوری
       $update_stmt = $pdo->prepare("UPDATE contacts SET last_birthday_reminder = CURDATE() WHERE id = ?");
@@ -757,6 +708,7 @@ function processBirthdayReminders()
       usleep(100000);
    }
 }
+
 
 /**
  * تولدهای نزدیک
@@ -771,9 +723,8 @@ function processUpcomingBirthdays()
    }
 
    $stmt = $pdo->prepare("
-        SELECT c.*, u.user_id as telegram_id 
+        SELECT c.*
         FROM contacts c
-        JOIN users u ON c.user_id = u.user_id
         WHERE c.birthday IS NOT NULL
         AND DATE_FORMAT(DATE_ADD(CURDATE(), INTERVAL 3 DAY), '%m-%d') = DATE_FORMAT(c.birthday, '%m-%d')
     ");
@@ -781,8 +732,8 @@ function processUpcomingBirthdays()
    $upcoming_birthdays = $stmt->fetchAll();
 
    foreach ($upcoming_birthdays as $contact) {
-      $text = "🎁 <b>یادآوری تولد</b>\n\n";
-      $text .= "3 روز دیگر تولد <b>" . htmlspecialchars($contact['name']) . "</b> است!\n\n";
+      $text = "🎁 یادآوری تولد\n\n";
+      $text .= "3 روز دیگر تولد " . htmlspecialchars($contact['name']) . " است!\n\n";
 
       if ($contact['relationship']) {
          $text .= "👥 نسبت: " . htmlspecialchars($contact['relationship']) . "\n";
@@ -797,13 +748,14 @@ function processUpcomingBirthdays()
          ]
       ];
 
-      sendMessage($contact['telegram_id'], $text, $keyboard);
+      sendMessage(SINGLE_USER_ID, $text, $keyboard);
       usleep(100000);
    }
 }
 
+
 /**
- * یادآوری تماس‌ها
+ * یادآوری تماسها
  */
 function processContactReminders()
 {
@@ -815,9 +767,8 @@ function processContactReminders()
    }
 
    $stmt = $pdo->prepare("
-        SELECT c.*, u.user_id as telegram_id 
+        SELECT c.*
         FROM contacts c
-        JOIN users u ON c.user_id = u.user_id
         WHERE c.contact_frequency > 0
         AND c.last_contact_date IS NOT NULL
         AND DATE_ADD(c.last_contact_date, INTERVAL c.contact_frequency DAY) <= CURDATE()
@@ -828,8 +779,8 @@ function processContactReminders()
    foreach ($contact_reminders as $contact) {
       $days_overdue = ceil((time() - strtotime($contact['last_contact_date'])) / (24 * 3600)) - $contact['contact_frequency'];
 
-      $text = "📞 <b>یادآوری تماس</b>\n\n";
-      $text .= "زمان تماس با <b>" . htmlspecialchars($contact['name']) . "</b> فرا رسیده!\n\n";
+      $text = "📞 یادآوری تماس\n\n";
+      $text .= "زمان تماس با " . htmlspecialchars($contact['name']) . " فرا رسیده!\n\n";
 
       if ($contact['phone']) {
          $text .= "📱 تلفن: " . htmlspecialchars($contact['phone']) . "\n";
@@ -856,47 +807,8 @@ function processContactReminders()
          ]
       ];
 
-      sendMessage($contact['telegram_id'], $text, $keyboard);
+      sendMessage(SINGLE_USER_ID, $text, $keyboard);
       usleep(100000);
-   }
-}
-
-/**
- * پاکسازی داده‌های قدیمی
- */
-function cleanupOldData()
-{
-   global $pdo;
-
-   try {
-      // حذف یادآورهای قدیمی غیرفعال (بیش از 3 ماه)
-      $stmt = $pdo->prepare("DELETE FROM reminders WHERE is_active = 0 AND created_at < DATE_SUB(NOW(), INTERVAL 3 MONTH)");
-      $stmt->execute();
-      $deleted_reminders = $stmt->rowCount();
-
-      // حذف بدهی‌ها و طلب‌های تسویه شده قدیمی (بیش از 1 سال)
-      $stmt = $pdo->prepare("DELETE FROM finances WHERE is_paid = 1 AND paid_at < DATE_SUB(NOW(), INTERVAL 1 YEAR)");
-      $stmt->execute();
-      $deleted_debts = $stmt->rowCount();
-
-      // حذف چک‌های نقد شده قدیمی (بیش از 1 سال)
-      $stmt = $pdo->prepare("DELETE FROM checks WHERE status IN ('cashed', 'cancelled') AND cashed_at < DATE_SUB(NOW(), INTERVAL 1 YEAR)");
-      $stmt->execute();
-      $deleted_checks = $stmt->rowCount();
-
-      // بروزرسانی آمار کاربران غیرفعال
-      $stmt = $pdo->prepare("UPDATE users SET step = 'inactive' WHERE last_activity < DATE_SUB(NOW(), INTERVAL 6 MONTH)");
-      $stmt->execute();
-      $inactive_users = $stmt->rowCount();
-
-      // حذف لاگ‌های خطای قدیمی (بیش از 1 ماه)
-      $stmt = $pdo->prepare("DELETE FROM error_logs WHERE created_at < DATE_SUB(NOW(), INTERVAL 1 MONTH)");
-      $stmt->execute();
-      $deleted_logs = $stmt->rowCount();
-
-      // error_log("Cleanup completed - Reminders: $deleted_reminders, Debts: $deleted_debts, Checks: $deleted_checks, Inactive users: $inactive_users, Error logs: $deleted_logs");
-   } catch (Exception $e) {
-      error_log("Cleanup error: " . $e->getMessage());
    }
 }
 
