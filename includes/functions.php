@@ -1065,6 +1065,7 @@ function sendMessage($chat_id, $text, $keyboard = null)
    $data = [
       'chat_id' => $chat_id,
       'text' => $text . "\n\n•",
+      'disable_web_page_preview' => true,
       'parse_mode' => 'HTML'
    ];
 
@@ -1102,6 +1103,7 @@ function answerCallbackQuery($callback_query_id, $text = '', $show_alert = false
 
    return makeRequest('answerCallbackQuery', $data);
 }
+
 
 
 
