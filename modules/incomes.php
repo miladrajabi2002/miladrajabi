@@ -502,8 +502,6 @@ function showIncomePreview($chat_id, $user_id, $data)
    $text .= "🛠 <b>خدمات:</b> " . $data['service_type'] . "\n";
    $text .= "💵 <b>مبلغ:</b> " . number_format($data['monthly_amount']) . " تومان/ماه\n";
    $text .= "📅 <b>شروع:</b> " . jdate('Y/m/d', strtotime($data['start_date'])) . "\n";
-
-   $due_date_persian = jdate('Y/m/d', strtotime($due_date));
    
    if (!empty($data['description'])) {
       $text .= "📝 <b>توضیحات:</b> " . $data['description'] . "\n";
