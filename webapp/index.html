@@ -2,105 +2,184 @@
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>مدیریت شخصی</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>داشبورد مدیریت شخصی</title>
     
-    <!-- Material Design CSS -->
-    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    
+    <!-- Materialize CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
     
+    <!-- Custom CSS -->
     <link rel="stylesheet" href="css/style.css">
     
+    <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
-<body>
-    <!-- Preloader -->
-    <div id="preloader">
-        <div class="preloader-wrapper big active">
-            <div class="spinner-layer spinner-blue-only">
-                <div class="circle-clipper left">
-                    <div class="circle"></div>
-                </div>
-                <div class="gap-patch">
-                    <div class="circle"></div>
-                </div>
-                <div class="circle-clipper right">
-                    <div class="circle"></div>
-                </div>
+<body class="theme-modern">
+    
+    <!-- Splash Screen -->
+    <div id="splash-screen">
+        <div class="splash-content">
+            <div class="splash-logo">
+                <i class="material-icons">dashboard</i>
+            </div>
+            <h5>داشبورد من</h5>
+            <div class="progress splash-progress">
+                <div class="indeterminate"></div>
             </div>
         </div>
     </div>
 
     <!-- App Container -->
     <div id="app" style="display: none;">
-        <!-- Header -->
-        <header>
-            <nav class="gradient-bg">
+        
+        <!-- Top App Bar -->
+        <header class="app-header">
+            <nav class="nav-extended">
                 <div class="nav-wrapper">
-                    <a href="#" class="brand-logo center">
+                    <a href="#" class="brand-logo">
                         <i class="material-icons">dashboard</i>
                         <span id="page-title">داشبورد</span>
                     </a>
-                    <a href="#" class="sidenav-trigger" data-target="mobile-nav">
+                    <a href="#" class="sidenav-trigger right" data-target="side-menu">
                         <i class="material-icons">menu</i>
                     </a>
                 </div>
             </nav>
         </header>
 
-        <!-- Side Navigation -->
-        <ul id="mobile-nav" class="sidenav">
+        <!-- Side Menu -->
+        <ul id="side-menu" class="sidenav">
             <li>
                 <div class="user-view">
-                    <div class="background gradient-bg"></div>
-                    <a href="#user"><img class="circle" id="user-avatar" src="https://ui-avatars.com/api/?name=User&background=random"></a>
-                    <a href="#name"><span class="white-text name" id="user-name">کاربر</span></a>
-                    <a href="#email"><span class="white-text email" id="user-phone">+98 912 345 6789</span></a>
+                    <div class="background">
+                        <div class="gradient-overlay"></div>
+                    </div>
+                    <a href="#user">
+                        <img class="circle" id="user-avatar" src="https://ui-avatars.com/api/?name=U&background=6366f1&color=fff&size=128">
+                    </a>
+                    <a href="#name"><span class="white-text name" id="user-name">کاربر گرامی</span></a>
+                    <a href="#stats"><span class="white-text email" id="user-stats">آمار روزانه</span></a>
                 </div>
             </li>
-            <li><a href="#!" onclick="showPage('dashboard')"><i class="material-icons">dashboard</i>داشبورد</a></li>
-            <li><a href="#!" onclick="showPage('incomes')"><i class="material-icons">monetization_on</i>درآمدها</a></li>
-            <li><a href="#!" onclick="showPage('reminders')"><i class="material-icons">notifications</i>یادآورها</a></li>
-            <li><a href="#!" onclick="showPage('notes')"><i class="material-icons">note</i>یادداشت‌ها</a></li>
-            <li><a href="#!" onclick="showPage('habits')"><i class="material-icons">check_circle</i>عادت‌ها</a></li>
+            <li><a href="#!" onclick="showPage('dashboard')" class="waves-effect"><i class="material-icons">dashboard</i>داشبورد</a></li>
             <li><div class="divider"></div></li>
-            <li><a href="#!" onclick="showPage('settings')"><i class="material-icons">settings</i>تنظیمات</a></li>
+            <li><a href="#!" onclick="showPage('incomes')" class="waves-effect"><i class="material-icons">monetization_on</i>درآمدها</a></li>
+            <li><a href="#!" onclick="showPage('reminders')" class="waves-effect"><i class="material-icons">notifications_active</i>یادآورها</a></li>
+            <li><a href="#!" onclick="showPage('notes')" class="waves-effect"><i class="material-icons">note</i>یادداشت‌ها</a></li>
+            <li><a href="#!" onclick="showPage('habits')" class="waves-effect"><i class="material-icons">track_changes</i>عادت‌ها</a></li>
+            <li><div class="divider"></div></li>
+            <li><a href="#!" onclick="showPage('settings')" class="waves-effect"><i class="material-icons">settings</i>تنظیمات</a></li>
+            <li><a href="#!" class="waves-effect"><i class="material-icons">info</i>درباره</a></li>
         </ul>
 
         <!-- Main Content -->
-        <main>
+        <main class="main-content">
+            
             <!-- Dashboard Page -->
             <div id="dashboard-page" class="page active">
                 <div class="container">
+                    
                     <!-- Welcome Card -->
-                    <div class="card welcome-card z-depth-2">
+                    <div class="card welcome-card z-depth-0 hoverable">
                         <div class="card-content">
-                            <h5 class="card-title">
-                                <i class="material-icons">wb_sunny</i>
-                                سلام <span id="welcome-name">کاربر عزیز</span>!
-                            </h5>
-                            <p class="grey-text" id="current-date">امروز چهارشنبه ۱۵ آذر ۱۴۰۴</p>
+                            <div class="row valign-wrapper mb-0">
+                                <div class="col s9">
+                                    <h5 class="mb-0">
+                                        <span class="greeting-icon">👋</span>
+                                        سلام <span id="welcome-user">کاربر عزیز</span>!
+                                    </h5>
+                                    <p class="grey-text text-darken-1 mb-0" id="current-date-time"></p>
+                                </div>
+                                <div class="col s3 center">
+                                    <i class="material-icons large gradient-text">wb_sunny</i>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Quick Stats -->
+                    <!-- Stats Grid -->
                     <div class="row">
-                        <div class="col s6">
-                            <div class="card stat-card z-depth-1 hoverable">
+                        <div class="col s6 m3">
+                            <div class="card stat-card hoverable z-depth-1">
                                 <div class="card-content center">
-                                    <i class="material-icons medium gradient-text">monetization_on</i>
-                                    <h6 class="stat-value" id="total-income">0</h6>
+                                    <div class="stat-icon indigo">
+                                        <i class="material-icons">monetization_on</i>
+                                    </div>
+                                    <h6 class="stat-value" id="stat-income">0</h6>
                                     <p class="stat-label">درآمد ماه</p>
                                 </div>
                             </div>
                         </div>
-                        <div class="col s6">
-                            <div class="card stat-card z-depth-1 hoverable">
+                        <div class="col s6 m3">
+                            <div class="card stat-card hoverable z-depth-1">
                                 <div class="card-content center">
-                                    <i class="material-icons medium gradient-text">notifications</i>
-                                    <h6 class="stat-value" id="total-reminders">0</h6>
+                                    <div class="stat-icon orange">
+                                        <i class="material-icons">notifications_active</i>
+                                    </div>
+                                    <h6 class="stat-value" id="stat-reminders">0</h6>
                                     <p class="stat-label">یادآور امروز</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col s6 m3">
+                            <div class="card stat-card hoverable z-depth-1">
+                                <div class="card-content center">
+                                    <div class="stat-icon green">
+                                        <i class="material-icons">check_circle</i>
+                                    </div>
+                                    <h6 class="stat-value" id="stat-habits">0/0</h6>
+                                    <p class="stat-label">عادت‌ها</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col s6 m3">
+                            <div class="card stat-card hoverable z-depth-1">
+                                <div class="card-content center">
+                                    <div class="stat-icon blue">
+                                        <i class="material-icons">note</i>
+                                    </div>
+                                    <h6 class="stat-value" id="stat-notes">0</h6>
+                                    <p class="stat-label">یادداشت</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Row -->
+                    <div class="row">
+                        <!-- Income Chart -->
+                        <div class="col s12 l6">
+                            <div class="card z-depth-1">
+                                <div class="card-content">
+                                    <h6 class="card-title">
+                                        <i class="material-icons tiny">show_chart</i>
+                                        روند درآمد 6 ماه اخیر
+                                    </h6>
+                                    <div class="chart-container">
+                                        <canvas id="incomeChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Habits Chart -->
+                        <div class="col s12 l6">
+                            <div class="card z-depth-1">
+                                <div class="card-content">
+                                    <h6 class="card-title">
+                                        <i class="material-icons tiny">bar_chart</i>
+                                        عادت‌های هفته گذشته
+                                    </h6>
+                                    <div class="chart-container">
+                                        <canvas id="habitsChart"></canvas>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -110,38 +189,59 @@
                     <div class="card z-depth-1">
                         <div class="card-content">
                             <h6 class="card-title">
-                                <i class="material-icons tiny">access_time</i>
+                                <i class="material-icons tiny">history</i>
                                 فعالیت‌های اخیر
                             </h6>
                             <ul class="collection" id="recent-activities">
-                                <li class="collection-item avatar">
-                                    <i class="material-icons circle green">check</i>
-                                    <span class="title">عادت ورزش انجام شد</span>
-                                    <p class="grey-text">2 ساعت پیش</p>
-                                </li>
-                                <li class="collection-item avatar">
-                                    <i class="material-icons circle blue">monetization_on</i>
-                                    <span class="title">درآمد جدید ثبت شد</span>
-                                    <p class="grey-text">5 ساعت پیش</p>
+                                <li class="collection-item center grey-text">
+                                    <div class="preloader-wrapper small active">
+                                        <div class="spinner-layer spinner-blue-only">
+                                            <div class="circle-clipper left"><div class="circle"></div></div>
+                                            <div class="gap-patch"><div class="circle"></div></div>
+                                            <div class="circle-clipper right"><div class="circle"></div></div>
+                                        </div>
+                                    </div>
                                 </li>
                             </ul>
                         </div>
                     </div>
+
                 </div>
             </div>
 
             <!-- Incomes Page -->
             <div id="incomes-page" class="page">
                 <div class="container">
+                    <!-- Stats Cards -->
+                    <div class="row">
+                        <div class="col s4">
+                            <div class="mini-stat-card indigo white-text">
+                                <div class="mini-stat-value" id="income-total">0</div>
+                                <div class="mini-stat-label">فعال</div>
+                            </div>
+                        </div>
+                        <div class="col s4">
+                            <div class="mini-stat-card orange white-text">
+                                <div class="mini-stat-value" id="income-monthly">0</div>
+                                <div class="mini-stat-label">مبلغ ماهانه</div>
+                            </div>
+                        </div>
+                        <div class="col s4">
+                            <div class="mini-stat-card green white-text">
+                                <div class="mini-stat-value" id="income-inactive">0</div>
+                                <div class="mini-stat-label">غیرفعال</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- List -->
                     <div class="card z-depth-1">
                         <div class="card-content">
                             <h6 class="card-title">
-                                <i class="material-icons tiny">monetization_on</i>
+                                <i class="material-icons tiny">list</i>
                                 لیست درآمدها
                             </h6>
-                            <div id="incomes-list" class="collection">
-                                <!-- Dynamic Content -->
-                            </div>
+                            <div id="incomes-list"></div>
                         </div>
                     </div>
                 </div>
@@ -153,12 +253,10 @@
                     <div class="card z-depth-1">
                         <div class="card-content">
                             <h6 class="card-title">
-                                <i class="material-icons tiny">notifications</i>
+                                <i class="material-icons tiny">notifications_active</i>
                                 یادآورهای امروز
                             </h6>
-                            <div id="reminders-list" class="collection">
-                                <!-- Dynamic Content -->
-                            </div>
+                            <div id="reminders-list"></div>
                         </div>
                     </div>
                 </div>
@@ -173,9 +271,7 @@
                                 <i class="material-icons tiny">note</i>
                                 یادداشت‌های من
                             </h6>
-                            <div id="notes-list">
-                                <!-- Dynamic Content -->
-                            </div>
+                            <div id="notes-list"></div>
                         </div>
                     </div>
                 </div>
@@ -187,12 +283,10 @@
                     <div class="card z-depth-1">
                         <div class="card-content">
                             <h6 class="card-title">
-                                <i class="material-icons tiny">check_circle</i>
+                                <i class="material-icons tiny">track_changes</i>
                                 عادت‌های امروز
                             </h6>
-                            <div id="habits-list">
-                                <!-- Dynamic Content -->
-                            </div>
+                            <div id="habits-list"></div>
                         </div>
                     </div>
                 </div>
@@ -205,11 +299,13 @@
                         <div class="card-content">
                             <h6 class="card-title">
                                 <i class="material-icons tiny">settings</i>
-                                تنظیمات
+                                تنظیمات برنامه
                             </h6>
                             <ul class="collection">
                                 <li class="collection-item">
-                                    <div>حالت تاریک
+                                    <div>
+                                        <i class="material-icons tiny">dark_mode</i>
+                                        حالت تاریک
                                         <div class="switch secondary-content">
                                             <label>
                                                 <input type="checkbox" id="dark-mode-toggle">
@@ -219,7 +315,9 @@
                                     </div>
                                 </li>
                                 <li class="collection-item">
-                                    <div>نوتیفیکیشن
+                                    <div>
+                                        <i class="material-icons tiny">notifications</i>
+                                        نوتیفیکیشن
                                         <div class="switch secondary-content">
                                             <label>
                                                 <input type="checkbox" checked>
@@ -228,11 +326,34 @@
                                         </div>
                                     </div>
                                 </li>
+                                <li class="collection-item">
+                                    <div>
+                                        <i class="material-icons tiny">vibration</i>
+                                        لرزش لمسی
+                                        <div class="switch secondary-content">
+                                            <label>
+                                                <input type="checkbox" checked id="haptic-toggle">
+                                                <span class="lever"></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </li>
                             </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- App Info -->
+                    <div class="card z-depth-1">
+                        <div class="card-content center">
+                            <i class="material-icons large gradient-text">dashboard</i>
+                            <h6 class="mt-2">داشبورد مدیریت شخصی</h6>
+                            <p class="grey-text">نسخه 2.0.0</p>
+                            <p class="grey-text">ساخته شده با ❤️</p>
                         </div>
                     </div>
                 </div>
             </div>
+
         </main>
 
         <!-- Bottom Navigation -->
@@ -243,33 +364,29 @@
             </div>
             <div class="nav-item" onclick="showPage('incomes')">
                 <i class="material-icons">monetization_on</i>
-                <span>درآمدها</span>
+                <span>درآمد</span>
             </div>
             <div class="nav-item" onclick="showPage('reminders')">
                 <i class="material-icons">notifications</i>
-                <span>یادآورها</span>
+                <span>یادآور</span>
             </div>
             <div class="nav-item" onclick="showPage('notes')">
                 <i class="material-icons">note</i>
-                <span>یادداشت‌ها</span>
+                <span>یادداشت</span>
             </div>
             <div class="nav-item" onclick="showPage('habits')">
-                <i class="material-icons">check_circle</i>
-                <span>عادت‌ها</span>
+                <i class="material-icons">track_changes</i>
+                <span>عادت</span>
             </div>
         </div>
-    </div>
 
-    <!-- Floating Action Button -->
-    <div class="fixed-action-btn">
-        <a class="btn-floating btn-large gradient-bg pulse">
-            <i class="large material-icons">add</i>
-        </a>
-        <ul>
-            <li><a class="btn-floating blue" onclick="M.toast({html: 'افزودن درآمد'})"><i class="material-icons">monetization_on</i></a></li>
-            <li><a class="btn-floating green" onclick="M.toast({html: 'افزودن یادآور'})"><i class="material-icons">notifications</i></a></li>
-            <li><a class="btn-floating orange" onclick="M.toast({html: 'افزودن یادداشت'})"><i class="material-icons">note_add</i></a></li>
-        </ul>
+        <!-- Floating Action Button -->
+        <div class="fixed-action-btn">
+            <a class="btn-floating btn-large gradient-bg pulse" onclick="M.toast({html: 'به زودی...'})">  
+                <i class="large material-icons">add</i>
+            </a>
+        </div>
+
     </div>
 
     <!-- Scripts -->

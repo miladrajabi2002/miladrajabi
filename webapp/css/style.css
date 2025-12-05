@@ -1,20 +1,66 @@
 /* ═══════════════════════════════════════════════════════════════
-   Material Design Styles for Telegram WebApp
+   Modern Telegram WebApp - Enhanced Design System
    ═══════════════════════════════════════════════════════════════ */
 
 :root {
-    --primary-color: #6200EA;
-    --primary-light: #9D46FF;
-    --primary-dark: #0A00B6;
-    --secondary-color: #03DAC6;
-    --background: #F5F5F5;
-    --surface: #FFFFFF;
-    --error: #B00020;
-    --on-primary: #FFFFFF;
-    --on-background: #000000;
-    --on-surface: #000000;
+    /* Modern Color Palette */
+    --primary: #6366f1;
+    --primary-light: #818cf8;
+    --primary-dark: #4f46e5;
+    --secondary: #f59e0b;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --info: #3b82f6;
+    
+    /* Backgrounds */
+    --bg-primary: #f8f9fa;
+    --bg-secondary: #ffffff;
+    --bg-card: #ffffff;
+    
+    /* Text Colors */
+    --text-primary: #1f2937;
+    --text-secondary: #6b7280;
+    --text-muted: #9ca3af;
+    
+    /* Borders & Shadows */
+    --border-color: #e5e7eb;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    
+    /* Spacing */
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+    
+    /* Border Radius */
+    --radius-sm: 0.375rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
+    --radius-xl: 1rem;
+    --radius-full: 9999px;
 }
 
+/* ───────────────────────────────────────────────────────────────
+   Dark Mode Colors
+   ─────────────────────────────────────────────────────────────── */
+body.dark-mode {
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --bg-card: #1e293b;
+    --text-primary: #f1f5f9;
+    --text-secondary: #cbd5e1;
+    --text-muted: #94a3b8;
+    --border-color: #334155;
+}
+
+/* ───────────────────────────────────────────────────────────────
+   Base Styles
+   ─────────────────────────────────────────────────────────────── */
 * {
     margin: 0;
     padding: 0;
@@ -22,104 +68,168 @@
 }
 
 body {
-    font-family: 'Vazirmatn', sans-serif;
-    background: var(--background);
+    font-family: 'Vazirmatn', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+.mb-0 { margin-bottom: 0 !important; }
+.mt-2 { margin-top: 0.5rem !important; }
+.mb-2 { margin-bottom: 0.5rem !important; }
+
 /* ───────────────────────────────────────────────────────────────
-   Preloader
+   Splash Screen
    ─────────────────────────────────────────────────────────────── */
-#preloader {
+#splash-screen {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100vh;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 9999;
+    z-index: 99999;
     transition: opacity 0.5s ease;
 }
 
-/* ───────────────────────────────────────────────────────────────
-   Gradient Background
-   ─────────────────────────────────────────────────────────────── */
-.gradient-bg {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+.splash-content {
+    text-align: center;
+    color: white;
 }
 
-.gradient-text {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+.splash-logo {
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-xl);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    animation: bounceIn 0.8s ease;
+}
+
+.splash-logo i {
+    font-size: 48px;
+    color: white;
+}
+
+.splash-content h5 {
+    margin: 1rem 0;
+    font-weight: 600;
+}
+
+.splash-progress {
+    width: 200px;
+    margin: 1.5rem auto 0;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+@keyframes bounceIn {
+    0% { transform: scale(0.5); opacity: 0; }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); opacity: 1; }
 }
 
 /* ───────────────────────────────────────────────────────────────
    Header & Navigation
    ─────────────────────────────────────────────────────────────── */
-nav {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+.app-header nav {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    box-shadow: var(--shadow-md);
 }
 
-nav .brand-logo {
-    display: flex;
+.brand-logo {
+    display: flex !important;
     align-items: center;
-    gap: 8px;
-    font-size: 1.2rem;
-    font-weight: 600;
+    gap: 0.5rem;
+    font-size: 1.3rem !important;
+    font-weight: 700 !important;
 }
 
+.brand-logo i {
+    font-size: 28px;
+}
+
+/* Side Menu */
 .sidenav {
-    width: 280px !important;
+    width: 300px !important;
+    background: var(--bg-secondary);
 }
 
-.sidenav li>a {
+.sidenav .user-view {
+    padding: 24px 32px 16px;
+}
+
+.sidenav .user-view .background {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.gradient-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.2) 100%);
+}
+
+.sidenav li > a {
+    color: var(--text-primary);
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 12px 24px;
+    gap: 1rem;
+    padding: 14px 32px;
     font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
 }
 
-.sidenav li>a>i {
+.sidenav li > a:hover {
+    background: var(--bg-primary);
+}
+
+.sidenav li > a > i {
     margin: 0 !important;
+    color: var(--primary);
 }
 
 /* ───────────────────────────────────────────────────────────────
    Main Content
    ─────────────────────────────────────────────────────────────── */
-main {
-    padding: 20px 0;
-    padding-bottom: 80px;
-    min-height: calc(100vh - 56px - 60px);
+.main-content {
+    padding: var(--spacing-lg) 0;
+    padding-bottom: 100px;
+    min-height: calc(100vh - 56px);
 }
 
 .container {
-    padding: 0 16px;
+    padding: 0 var(--spacing-md);
+    max-width: 1200px;
 }
 
-/* ───────────────────────────────────────────────────────────────
-   Pages
-   ─────────────────────────────────────────────────────────────── */
+/* Pages */
 .page {
     display: none;
-    animation: fadeIn 0.3s ease;
+    animation: fadeInUp 0.4s ease;
 }
 
 .page.active {
     display: block;
 }
 
-@keyframes fadeIn {
+@keyframes fadeInUp {
     from {
         opacity: 0;
-        transform: translateY(10px);
+        transform: translateY(20px);
     }
     to {
         opacity: 1;
@@ -131,50 +241,99 @@ main {
    Cards
    ─────────────────────────────────────────────────────────────── */
 .card {
-    border-radius: 12px !important;
-    margin: 16px 0;
-    overflow: hidden;
+    background: var(--bg-card);
+    border-radius: var(--radius-lg) !important;
+    margin: var(--spacing-md) 0;
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+}
+
+.card.hoverable:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg) !important;
 }
 
 .card-title {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
     font-size: 1.1rem !important;
     font-weight: 600 !important;
-    margin-bottom: 16px !important;
+    color: var(--text-primary) !important;
+    margin-bottom: var(--spacing-md) !important;
 }
 
+.card-title i {
+    color: var(--primary);
+}
+
+/* Welcome Card */
 .welcome-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: white !important;
+    border: none;
 }
 
-.welcome-card .card-title {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin: 0;
+.welcome-card h5 {
+    color: white;
+    font-weight: 700;
+}
+
+.welcome-card .grey-text {
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.greeting-icon {
+    display: inline-block;
+    animation: wave 1.5s ease infinite;
+    transform-origin: 70% 70%;
+}
+
+@keyframes wave {
+    0%, 100% { transform: rotate(0deg); }
+    10%, 30% { transform: rotate(14deg); }
+    20% { transform: rotate(-8deg); }
+    40% { transform: rotate(-4deg); }
+    50% { transform: rotate(10deg); }
 }
 
 /* ───────────────────────────────────────────────────────────────
-   Stats Cards
+   Stat Cards
    ─────────────────────────────────────────────────────────────── */
 .stat-card {
-    border-radius: 16px !important;
-    transition: all 0.3s ease;
     cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.stat-card:hover {
-    transform: translateY(-4px);
+.stat-card:active {
+    transform: scale(0.97);
+}
+
+.stat-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto var(--spacing-sm);
+}
+
+.stat-icon.indigo { background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); }
+.stat-icon.orange { background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%); }
+.stat-icon.green { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+.stat-icon.blue { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+
+.stat-icon i {
+    color: white;
+    font-size: 28px;
 }
 
 .stat-value {
     font-size: 1.8rem;
-    font-weight: 700;
-    margin: 8px 0;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    font-weight: 800;
+    margin: var(--spacing-sm) 0;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -182,8 +341,35 @@ main {
 
 .stat-label {
     font-size: 0.85rem;
-    color: #666;
-    margin: 0;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+/* Mini Stats */
+.mini-stat-card {
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+    text-align: center;
+}
+
+.mini-stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.mini-stat-label {
+    font-size: 0.75rem;
+    opacity: 0.9;
+}
+
+/* ───────────────────────────────────────────────────────────────
+   Charts
+   ─────────────────────────────────────────────────────────────── */
+.chart-container {
+    position: relative;
+    height: 250px;
+    margin-top: var(--spacing-md);
 }
 
 /* ───────────────────────────────────────────────────────────────
@@ -191,14 +377,16 @@ main {
    ─────────────────────────────────────────────────────────────── */
 .collection {
     border: none !important;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     overflow: hidden;
 }
 
 .collection-item {
+    background: var(--bg-card);
     border: none !important;
-    border-bottom: 1px solid #f0f0f0 !important;
-    padding: 16px !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    padding: var(--spacing-md) !important;
+    color: var(--text-primary);
 }
 
 .collection-item:last-child {
@@ -210,8 +398,8 @@ main {
 }
 
 .collection-item .title {
-    font-weight: 500;
-    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
 }
 
 /* ───────────────────────────────────────────────────────────────
@@ -222,11 +410,12 @@ main {
     bottom: 0;
     left: 0;
     right: 0;
-    background: white;
+    background: var(--bg-secondary);
     display: flex;
     justify-content: space-around;
-    padding: 8px 0;
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.08);
+    border-top: 1px solid var(--border-color);
     z-index: 1000;
 }
 
@@ -235,25 +424,30 @@ main {
     flex-direction: column;
     align-items: center;
     gap: 4px;
-    padding: 4px 12px;
+    padding: 6px 16px;
     cursor: pointer;
-    transition: all 0.3s ease;
-    border-radius: 12px;
-    color: #666;
+    transition: all 0.2s ease;
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    min-width: 60px;
 }
 
 .nav-item i {
     font-size: 24px;
+    transition: all 0.2s ease;
 }
 
 .nav-item span {
     font-size: 0.7rem;
-    font-weight: 500;
+    font-weight: 600;
 }
 
 .nav-item.active {
-    background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
-    color: #667eea;
+    color: var(--primary);
+}
+
+.nav-item.active i {
+    transform: scale(1.1);
 }
 
 .nav-item:active {
@@ -264,70 +458,49 @@ main {
    Floating Action Button
    ─────────────────────────────────────────────────────────────── */
 .fixed-action-btn {
-    bottom: 80px !important;
+    bottom: 90px !important;
+}
+
+.gradient-bg {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
+}
+
+.gradient-text {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .btn-floating {
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4) !important;
-}
-
-.btn-floating:hover {
-    transform: scale(1.05);
+    box-shadow: var(--shadow-lg) !important;
 }
 
 /* ───────────────────────────────────────────────────────────────
-   Dark Mode
+   Responsive Design
    ─────────────────────────────────────────────────────────────── */
-body.dark-mode {
-    --background: #121212;
-    --surface: #1E1E1E;
-    --on-background: #FFFFFF;
-    --on-surface: #FFFFFF;
-    background: var(--background);
-    color: var(--on-background);
-}
-
-body.dark-mode .card {
-    background: var(--surface);
-    color: var(--on-surface);
-}
-
-body.dark-mode .bottom-nav {
-    background: var(--surface);
-}
-
-body.dark-mode .nav-item {
-    color: #AAA;
-}
-
-body.dark-mode .nav-item.active {
-    background: linear-gradient(135deg, #667eea30 0%, #764ba230 100%);
-    color: #9D46FF;
-}
-
-body.dark-mode .collection-item {
-    background: var(--surface);
-    color: var(--on-surface);
-    border-bottom: 1px solid #333 !important;
-}
-
-/* ───────────────────────────────────────────────────────────────
-   Utilities
-   ─────────────────────────────────────────────────────────────── */
-.hoverable:hover {
-    box-shadow: 0 8px 16px rgba(0,0,0,0.15) !important;
-}
-
-/* ───────────────────────────────────────────────────────────────
-   Responsive
-   ─────────────────────────────────────────────────────────────── */
-@media only screen and (max-width: 600px) {
+@media only screen and (max-width: 992px) {
     .container {
         padding: 0 12px;
     }
-    
+}
+
+@media only screen and (max-width: 600px) {
     .stat-value {
         font-size: 1.5rem;
+    }
+    
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+    }
+    
+    .stat-icon i {
+        font-size: 24px;
+    }
+    
+    .chart-container {
+        height: 200px;
     }
     
     .nav-item span {
@@ -336,20 +509,34 @@ body.dark-mode .collection-item {
 }
 
 /* ───────────────────────────────────────────────────────────────
-   Animations
+   Utilities
    ─────────────────────────────────────────────────────────────── */
+.pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
 @keyframes pulse {
-    0% {
-        box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7);
+    0%, 100% {
+        opacity: 1;
     }
-    70% {
-        box-shadow: 0 0 0 10px rgba(102, 126, 234, 0);
-    }
-    100% {
-        box-shadow: 0 0 0 0 rgba(102, 126, 234, 0);
+    50% {
+        opacity: .8;
     }
 }
 
-.pulse {
-    animation: pulse 2s infinite;
+/* Loading State */
+.loading-skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s ease-in-out infinite;
+}
+
+body.dark-mode .loading-skeleton {
+    background: linear-gradient(90deg, #2a2a2a 25%, #3a3a3a 50%, #2a2a2a 75%);
+    background-size: 200% 100%;
+}
+
+@keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
 }

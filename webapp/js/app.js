@@ -1,311 +1,412 @@
 // ═══════════════════════════════════════════════════════════════
-// Telegram WebApp JavaScript
+// Enhanced Telegram WebApp
 // ═══════════════════════════════════════════════════════════════
 
-let tg = window.Telegram.WebApp;
+const tg = window.Telegram.WebApp;
+const API_URL = '../webapp/api/';
+
+let userId = null;
+let hapticEnabled = true;
+let incomeChart = null;
+let habitsChart = null;
 
 // ───────────────────────────────────────────────────────────────
-// Initialize Telegram WebApp
+// Initialize
 // ───────────────────────────────────────────────────────────────
 function initTelegramWebApp() {
     tg.ready();
     tg.expand();
     
-    // Set theme
+    // Dark mode
     if (tg.colorScheme === 'dark') {
         document.body.classList.add('dark-mode');
-        document.getElementById('dark-mode-toggle').checked = true;
+        const toggle = document.getElementById('dark-mode-toggle');
+        if (toggle) toggle.checked = true;
     }
     
-    // Get user data
+    // User data
     const user = tg.initDataUnsafe?.user;
     if (user) {
-        document.getElementById('user-name').textContent = user.first_name;
-        document.getElementById('welcome-name').textContent = user.first_name;
+        userId = user.id;
+        const userName = user.first_name || 'کاربر';
         
-        if (user.photo_url) {
-            document.getElementById('user-avatar').src = user.photo_url;
-        } else {
-            document.getElementById('user-avatar').src = `https://ui-avatars.com/api/?name=${user.first_name}&background=667eea&color=fff`;
-        }
+        document.getElementById('user-name').textContent = userName;
+        document.getElementById('welcome-user').textContent = userName;
+        
+        const avatarUrl = user.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=6366f1&color=fff&size=128`;
+        document.getElementById('user-avatar').src = avatarUrl;
+    } else {
+        userId = 123456; // For testing
     }
     
-    // Set current date
-    setCurrentDate();
+    updateDateTime();
+    setInterval(updateDateTime, 60000);
+}
+
+function updateDateTime() {
+    const now = new Date();
+    const days = ['یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنج‌شنبه', 'جمعه', 'شنبه'];
+    const dayName = days[now.getDay()];
+    const time = now.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
+    
+    const el = document.getElementById('current-date-time');
+    if (el) {
+        el.textContent = `${dayName}، ${time}`;
+    }
+}
+
+function initMaterialize() {
+    M.Sidenav.init(document.querySelectorAll('.sidenav'));
+    M.FloatingActionButton.init(document.querySelectorAll('.fixed-action-btn'));
 }
 
 // ───────────────────────────────────────────────────────────────
-// Initialize Materialize Components
+// API Calls
 // ───────────────────────────────────────────────────────────────
-function initMaterialize() {
-    // Sidenav
-    var elems = document.querySelectorAll('.sidenav');
-    M.Sidenav.init(elems);
-    
-    // Floating Action Button
-    var fab = document.querySelectorAll('.fixed-action-btn');
-    M.FloatingActionButton.init(fab, {
-        direction: 'top',
-        hoverEnabled: false
-    });
-    
-    // Tooltips
-    var tooltips = document.querySelectorAll('.tooltipped');
-    M.Tooltip.init(tooltips);
+async function apiCall(endpoint, data = {}) {
+    try {
+        const response = await fetch(API_URL + endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: userId, ...data })
+        });
+        return await response.json();
+    } catch (error) {
+        console.error('API Error:', error);
+        M.toast({ html: 'خطا در ارتباط با سرور', classes: 'red rounded' });
+        return { success: false };
+    }
 }
 
 // ───────────────────────────────────────────────────────────────
 // Page Navigation
 // ───────────────────────────────────────────────────────────────
 function showPage(pageName) {
-    // Hide all pages
-    const pages = document.querySelectorAll('.page');
-    pages.forEach(page => page.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(pageName + '-page').classList.add('active');
     
-    // Show selected page
-    const selectedPage = document.getElementById(pageName + '-page');
-    if (selectedPage) {
-        selectedPage.classList.add('active');
-    }
-    
-    // Update bottom nav
-    const navItems = document.querySelectorAll('.nav-item');
-    navItems.forEach(item => item.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
     event.currentTarget.classList.add('active');
     
-    // Update header title
     const titles = {
-        'dashboard': 'داشبورد',
-        'incomes': 'درآمدها',
-        'reminders': 'یادآورها',
-        'notes': 'یادداشت‌ها',
-        'habits': 'عادت‌ها',
-        'settings': 'تنظیمات'
+        dashboard: 'داشبورد',
+        incomes: 'درآمدها',
+        reminders: 'یادآورها',
+        notes: 'یادداشت‌ها',
+        habits: 'عادت‌ها',
+        settings: 'تنظیمات'
     };
-    document.getElementById('page-title').textContent = titles[pageName] || 'داشبورد';
+    document.getElementById('page-title').textContent = titles[pageName];
     
-    // Close sidenav on mobile
-    var sidenav = document.querySelector('.sidenav');
-    var instance = M.Sidenav.getInstance(sidenav);
-    if (instance) instance.close();
+    M.Sidenav.getInstance(document.querySelector('.sidenav'))?.close();
     
-    // Load page data
     loadPageData(pageName);
     
-    // Send event to Telegram
-    tg.HapticFeedback.impactOccurred('light');
+    if (hapticEnabled) tg.HapticFeedback.impactOccurred('light');
 }
 
-// ───────────────────────────────────────────────────────────────
-// Load Page Data
-// ───────────────────────────────────────────────────────────────
 function loadPageData(pageName) {
     switch(pageName) {
-        case 'dashboard':
-            loadDashboard();
-            break;
-        case 'incomes':
-            loadIncomes();
-            break;
-        case 'reminders':
-            loadReminders();
-            break;
-        case 'notes':
-            loadNotes();
-            break;
-        case 'habits':
-            loadHabits();
-            break;
+        case 'dashboard': loadDashboard(); break;
+        case 'incomes': loadIncomes(); break;
+        case 'reminders': loadReminders(); break;
+        case 'notes': loadNotes(); break;
+        case 'habits': loadHabits(); break;
     }
 }
 
 // ───────────────────────────────────────────────────────────────
-// Load Dashboard Data
+// Dashboard
 // ───────────────────────────────────────────────────────────────
-function loadDashboard() {
-    // Simulate API call
-    setTimeout(() => {
-        // Update stats
-        document.getElementById('total-income').textContent = '10.5M';
-        document.getElementById('total-reminders').textContent = '5';
+async function loadDashboard() {
+    const result = await apiCall('dashboard.php');
+    
+    if (result.success) {
+        const { stats, income_chart, habits_chart, recent_activities } = result.data;
         
-        // Show toast
-        M.toast({html: 'داشبورد بروزرسانی شد', classes: 'rounded'});
-    }, 500);
+        // Update stats
+        document.getElementById('stat-income').textContent = formatMoney(stats.monthly_income);
+        document.getElementById('stat-reminders').textContent = stats.today_reminders;
+        document.getElementById('stat-habits').textContent = `${stats.completed_habits}/${stats.total_habits}`;
+        document.getElementById('stat-notes').textContent = stats.total_notes;
+        
+        // Charts
+        renderIncomeChart(income_chart);
+        renderHabitsChart(habits_chart);
+        
+        // Recent activities
+        renderActivities(recent_activities);
+    }
+}
+
+function renderIncomeChart(data) {
+    const ctx = document.getElementById('incomeChart').getContext('2d');
+    
+    if (incomeChart) incomeChart.destroy();
+    
+    incomeChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: data.map(d => d.month),
+            datasets: [{
+                label: 'درآمد (تومان)',
+                data: data.map(d => d.amount / 1000000),
+                borderColor: '#6366f1',
+                backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: value => value + 'M'
+                    }
+                }
+            }
+        }
+    });
+}
+
+function renderHabitsChart(data) {
+    const ctx = document.getElementById('habitsChart').getContext('2d');
+    
+    if (habitsChart) habitsChart.destroy();
+    
+    habitsChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: data.map(d => d.day),
+            datasets: [{
+                label: 'عادت انجام شده',
+                data: data.map(d => d.count),
+                backgroundColor: '#10b981'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { stepSize: 1 }
+                }
+            }
+        }
+    });
+}
+
+function renderActivities(activities) {
+    const container = document.getElementById('recent-activities');
+    
+    if (!activities || activities.length === 0) {
+        container.innerHTML = '<li class="collection-item center grey-text">فعالیتی ثبت نشده</li>';
+        return;
+    }
+    
+    container.innerHTML = activities.map(act => `
+        <li class="collection-item avatar">
+            <i class="material-icons circle ${act.color}">${act.icon}</i>
+            <span class="title">${act.title}</span>
+            <p class="grey-text">${act.time}</p>
+        </li>
+    `).join('');
 }
 
 // ───────────────────────────────────────────────────────────────
-// Load Incomes
+// Incomes
 // ───────────────────────────────────────────────────────────────
-function loadIncomes() {
-    const container = document.getElementById('incomes-list');
-    container.innerHTML = '';
+async function loadIncomes() {
+    const result = await apiCall('incomes.php');
     
-    // Simulate data
-    const incomes = [
-        { name: 'مشتری A', amount: '5,000,000', service: 'پشتیبانی سرور', date: '15 آذر' },
-        { name: 'مشتری B', amount: '3,000,000', service: 'هاست', date: '10 آذر' },
-        { name: 'مشتری C', amount: '2,500,000', service: 'VPS', date: '5 آذر' }
-    ];
+    if (result.success) {
+        const { incomes, stats } = result.data;
+        
+        document.getElementById('income-total').textContent = stats.total_active;
+        document.getElementById('income-monthly').textContent = formatMoney(stats.monthly_total);
+        document.getElementById('income-inactive').textContent = stats.total_inactive;
+        
+        const container = document.getElementById('incomes-list');
+        
+        if (incomes.length === 0) {
+            container.innerHTML = '<p class="center grey-text">درآمدی ثبت نشده</p>';
+            return;
+        }
+        
+        container.innerHTML = '<ul class="collection">' + incomes.map(inc => `
+            <li class="collection-item">
+                <div>
+                    <span class="title">${inc.client_name}</span>
+                    ${inc.client_username ? `<a href="https://t.me/${inc.client_username.replace('@', '')}" target="_blank" class="grey-text">@${inc.client_username.replace('@', '')}</a>` : ''}
+                    <p class="grey-text">${inc.service_type}</p>
+                    <p class="grey-text">مبلغ: ${formatMoney(inc.monthly_amount)} | ${inc.months} ماه | کل: ${formatMoney(inc.total_earned)}</p>
+                    ${inc.payment_day ? `<p class="grey-text">روز پرداخت: ${inc.payment_day} هر ماه</p>` : ''}
+                </div>
+                <span class="secondary-content">
+                    <span class="badge ${inc.is_active ? 'green' : 'grey'} white-text">${inc.is_active ? 'فعال' : 'غیرفعال'}</span>
+                </span>
+            </li>
+        `).join('') + '</ul>';
+    }
+}
+
+// ───────────────────────────────────────────────────────────────
+// Habits
+// ───────────────────────────────────────────────────────────────
+async function loadHabits() {
+    const result = await apiCall('habits.php', { action: 'list' });
     
-    incomes.forEach(income => {
-        const item = document.createElement('div');
-        item.className = 'collection-item';
-        item.innerHTML = `
-            <div>
-                <span class="title">${income.name}</span>
-                <p class="grey-text">${income.service}</p>
-                <p class="grey-text">تاریخ پرداخت: ${income.date}</p>
+    if (result.success) {
+        const { habits } = result.data;
+        const container = document.getElementById('habits-list');
+        
+        if (habits.length === 0) {
+            container.innerHTML = '<p class="center grey-text">عادتی ثبت نشده</p>';
+            return;
+        }
+        
+        container.innerHTML = '<ul class="collection">' + habits.map(habit => `
+            <li class="collection-item">
+                <div>
+                    <label>
+                        <input type="checkbox" class="filled-in" ${habit.is_completed_today ? 'checked' : ''} 
+                               onchange="toggleHabit(${habit.id}, this.checked)">
+                        <span>${habit.name}</span>
+                    </label>
+                    <div class="progress" style="margin-top: 8px;">
+                        <div class="determinate" style="width: ${habit.progress}%"></div>
+                    </div>
+                    <p class="grey-text">پیشرفت: ${habit.total_completed}/${habit.target_days} روز (${habit.progress}%)</p>
+                </div>
+            </li>
+        `).join('') + '</ul>';
+    }
+}
+
+async function toggleHabit(habitId, checked) {
+    if (hapticEnabled) tg.HapticFeedback.impactOccurred('medium');
+    
+    const result = await apiCall('habits.php', { action: 'toggle', habit_id: habitId });
+    
+    if (result.success) {
+        M.toast({ html: result.message, classes: 'green rounded' });
+        loadHabits();
+        loadDashboard();
+    }
+}
+
+// ───────────────────────────────────────────────────────────────
+// Reminders
+// ───────────────────────────────────────────────────────────────
+async function loadReminders() {
+    const result = await apiCall('reminders.php');
+    
+    if (result.success) {
+        const { reminders } = result.data;
+        const container = document.getElementById('reminders-list');
+        
+        if (reminders.length === 0) {
+            container.innerHTML = '<p class="center grey-text">یادآوری برای امروز ندارید</p>';
+            return;
+        }
+        
+        container.innerHTML = '<ul class="collection">' + reminders.map(rem => `
+            <li class="collection-item avatar">
+                <i class="material-icons circle ${rem.is_past ? 'grey' : 'orange'}">notifications</i>
+                <span class="title">${rem.title}</span>
+                <p>${rem.description || ''}</p>
+                <p class="grey-text">ساعت: ${rem.time_fa}</p>
+            </li>
+        `).join('') + '</ul>';
+    }
+}
+
+// ───────────────────────────────────────────────────────────────
+// Notes
+// ───────────────────────────────────────────────────────────────
+async function loadNotes() {
+    const result = await apiCall('notes.php');
+    
+    if (result.success) {
+        const { notes } = result.data;
+        const container = document.getElementById('notes-list');
+        
+        if (notes.length === 0) {
+            container.innerHTML = '<p class="center grey-text">یادداشتی ندارید</p>';
+            return;
+        }
+        
+        container.innerHTML = notes.map(note => `
+            <div class="card hoverable">
+                <div class="card-content">
+                    <p>${note.preview}</p>
+                    <p class="grey-text" style="font-size: 0.8rem; margin-top: 8px;">${note.created_at_fa}</p>
+                </div>
             </div>
-            <span class="secondary-content">
-                <strong class="gradient-text">${income.amount} ت</strong>
-            </span>
-        `;
-        container.appendChild(item);
-    });
+        `).join('');
+    }
 }
 
 // ───────────────────────────────────────────────────────────────
-// Load Reminders
+// Utilities
 // ───────────────────────────────────────────────────────────────
-function loadReminders() {
-    const container = document.getElementById('reminders-list');
-    container.innerHTML = '';
-    
-    const reminders = [
-        { title: 'جلسه با تیم', time: '10:00', type: 'meeting' },
-        { title: 'تماس با مشتری', time: '14:30', type: 'call' },
-        { title: 'پرداخت قبض برق', time: '18:00', type: 'payment' }
-    ];
-    
-    const icons = {
-        'meeting': 'groups',
-        'call': 'phone',
-        'payment': 'payment'
-    };
-    
-    reminders.forEach(reminder => {
-        const item = document.createElement('div');
-        item.className = 'collection-item avatar';
-        item.innerHTML = `
-            <i class="material-icons circle blue">${icons[reminder.type]}</i>
-            <span class="title">${reminder.title}</span>
-            <p class="grey-text">${reminder.time}</p>
-        `;
-        container.appendChild(item);
-    });
+function formatMoney(amount) {
+    if (amount >= 1000000) {
+        return (amount / 1000000).toFixed(1) + 'M';
+    }
+    return new Intl.NumberFormat('fa-IR').format(amount);
 }
 
 // ───────────────────────────────────────────────────────────────
-// Load Notes
-// ───────────────────────────────────────────────────────────────
-function loadNotes() {
-    const container = document.getElementById('notes-list');
-    container.innerHTML = '';
-    
-    const notes = [
-        { title: 'ایده پروژه جدید', content: 'ساخت یک اپلیکیشن موبایل برای...', date: 'امروز' },
-        { title: 'لیست خرید', content: 'شیر، نان، تخم مرغ، ماست', date: 'دیروز' }
-    ];
-    
-    notes.forEach(note => {
-        const card = document.createElement('div');
-        card.className = 'card z-depth-1';
-        card.innerHTML = `
-            <div class="card-content">
-                <span class="card-title">${note.title}</span>
-                <p class="grey-text">${note.content}</p>
-                <p class="grey-text" style="font-size: 0.8rem; margin-top: 8px;">${note.date}</p>
-            </div>
-        `;
-        container.appendChild(card);
-    });
-}
-
-// ───────────────────────────────────────────────────────────────
-// Load Habits
-// ───────────────────────────────────────────────────────────────
-function loadHabits() {
-    const container = document.getElementById('habits-list');
-    container.innerHTML = '';
-    
-    const habits = [
-        { name: 'ورزش صبحگاهی', done: true },
-        { name: 'مطالعه کتاب', done: false },
-        { name: 'نوشیدن آب', done: true },
-        { name: 'مدیتیشن', done: false }
-    ];
-    
-    const list = document.createElement('ul');
-    list.className = 'collection';
-    
-    habits.forEach(habit => {
-        const item = document.createElement('li');
-        item.className = 'collection-item';
-        item.innerHTML = `
-            <div>
-                <label>
-                    <input type="checkbox" class="filled-in" ${habit.done ? 'checked' : ''} />
-                    <span style="font-size: 0.95rem;">${habit.name}</span>
-                </label>
-            </div>
-        `;
-        list.appendChild(item);
-    });
-    
-    container.appendChild(list);
-}
-
-// ───────────────────────────────────────────────────────────────
-// Dark Mode Toggle
+// Dark Mode
 // ───────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
-    const darkModeToggle = document.getElementById('dark-mode-toggle');
-    if (darkModeToggle) {
-        darkModeToggle.addEventListener('change', function() {
+    const darkToggle = document.getElementById('dark-mode-toggle');
+    const hapticToggle = document.getElementById('haptic-toggle');
+    
+    if (darkToggle) {
+        darkToggle.addEventListener('change', function() {
             document.body.classList.toggle('dark-mode');
-            tg.HapticFeedback.impactOccurred('medium');
-            M.toast({html: this.checked ? 'حالت تاریک فعال شد' : 'حالت روشن فعال شد', classes: 'rounded'});
+            if (hapticEnabled) tg.HapticFeedback.impactOccurred('medium');
+            M.toast({ html: this.checked ? 'حالت تاریک فعال شد' : 'حالت روشن فعال شد', classes: 'rounded' });
+        });
+    }
+    
+    if (hapticToggle) {
+        hapticToggle.addEventListener('change', function() {
+            hapticEnabled = this.checked;
+            M.toast({ html: this.checked ? 'لرزش لمسی فعال شد' : 'لرزش لمسی غیرفعال شد', classes: 'rounded' });
         });
     }
 });
 
 // ───────────────────────────────────────────────────────────────
-// Set Current Date
-// ───────────────────────────────────────────────────────────────
-function setCurrentDate() {
-    const days = ['یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنج‌شنبه', 'جمعه', 'شنبه'];
-    const date = new Date();
-    const dayName = days[date.getDay()];
-    document.getElementById('current-date').textContent = `امروز ${dayName}`;
-}
-
-// ───────────────────────────────────────────────────────────────
-// Initialize App
+// App Initialization
 // ───────────────────────────────────────────────────────────────
 window.addEventListener('load', function() {
     initTelegramWebApp();
     initMaterialize();
     loadDashboard();
     
-    // Hide preloader
     setTimeout(() => {
-        document.getElementById('preloader').style.opacity = '0';
+        document.getElementById('splash-screen').style.opacity = '0';
         setTimeout(() => {
-            document.getElementById('preloader').style.display = 'none';
+            document.getElementById('splash-screen').style.display = 'none';
             document.getElementById('app').style.display = 'block';
         }, 500);
-    }, 1500);
+    }, 2000);
 });
 
-// ───────────────────────────────────────────────────────────────
-// Handle Telegram Back Button
-// ───────────────────────────────────────────────────────────────
-tg.BackButton.onClick(function() {
-    tg.close();
-});
-
-// ───────────────────────────────────────────────────────────────
-// Export functions for inline use
-// ───────────────────────────────────────────────────────────────
+// Export functions
 window.showPage = showPage;
+window.toggleHabit = toggleHabit;
