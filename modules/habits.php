@@ -9,8 +9,8 @@ function showHabitsMenu($chat_id, $user_id, $message_id)
         COUNT(*) as total_habits,
         COUNT(CASE WHEN is_active = 1 THEN 1 END) as active_habits,
         SUM(total_completed) as total_completions
-        FROM habits WHERE user_id = :user_id");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+        FROM habits");
+   
    $stmt->execute();
    $stats = $stmt->fetch();
 
@@ -19,9 +19,9 @@ function showHabitsMenu($chat_id, $user_id, $message_id)
         CASE WHEN hl.completed_date = CURDATE() THEN 1 ELSE 0 END as completed_today
         FROM habits h
         LEFT JOIN habit_logs hl ON h.id = hl.habit_id AND hl.completed_date = CURDATE()
-        WHERE h.user_id = :user_id AND h.is_active = 1
+        WHERE h.is_active = 1
         ORDER BY completed_today ASC, h.name ASC");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   
    $stmt->execute();
    $today_habits = $stmt->fetchAll();
 
@@ -189,15 +189,15 @@ function showHabitsList($chat_id, $user_id, $message_id, $page = 1)
    $limit = 6;
    $offset = ($page - 1) * $limit;
 
-   $stmt = $pdo->prepare("SELECT * FROM habits WHERE user_id = :user_id ORDER BY is_active DESC, name ASC LIMIT :limit OFFSET :offset");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   $stmt = $pdo->prepare("SELECT * FROM habits ORDER BY is_active DESC, name ASC LIMIT :limit OFFSET :offset");
+   
    $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
    $stmt->execute();
    $habits = $stmt->fetchAll();
 
-   $stmt = $pdo->prepare("SELECT COUNT(*) FROM habits WHERE user_id = :user_id");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   $stmt = $pdo->prepare("SELECT COUNT(*) FROM habits");
+   
    $stmt->execute();
    $total = $stmt->fetchColumn();
 
@@ -277,9 +277,9 @@ function showTodayHabits($chat_id, $user_id, $message_id)
         CASE WHEN hl.completed_date = CURDATE() THEN 1 ELSE 0 END as completed_today
         FROM habits h
         LEFT JOIN habit_logs hl ON h.id = hl.habit_id AND hl.completed_date = CURDATE()
-        WHERE h.user_id = :user_id AND h.is_active = 1
+        WHERE h.is_active = 1
         ORDER BY completed_today ASC, h.name ASC");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   
    $stmt->execute();
    $habits = $stmt->fetchAll();
 
@@ -390,9 +390,9 @@ function viewHabitDetails($chat_id, $user_id, $message_id, $habit_id)
 {
    global $pdo;
 
-   $stmt = $pdo->prepare("SELECT * FROM habits WHERE id = :id AND user_id = :user_id");
+   $stmt = $pdo->prepare("SELECT * FROM habits WHERE id = :id");
    $stmt->bindValue(':id', $habit_id, PDO::PARAM_INT);
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   
    $stmt->execute();
    $habit = $stmt->fetch();
 
@@ -480,8 +480,8 @@ function showHabitsStats($chat_id, $user_id, $message_id)
         COUNT(*) as total_habits,
         COUNT(CASE WHEN is_active = 1 THEN 1 END) as active_habits,
         SUM(total_completed) as total_completions
-        FROM habits WHERE user_id = :user_id");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+        FROM habits");
+   
    $stmt->execute();
    $stats = $stmt->fetch();
 
@@ -489,8 +489,8 @@ function showHabitsStats($chat_id, $user_id, $message_id)
    $stmt = $pdo->prepare("SELECT COUNT(*) as week_completions
         FROM habit_logs hl
         JOIN habits h ON hl.habit_id = h.id
-        WHERE h.user_id = :user_id AND hl.completed_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+        WHERE hl.completed_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)");
+   
    $stmt->execute();
    $week_stats = $stmt->fetch();
 
@@ -498,16 +498,16 @@ function showHabitsStats($chat_id, $user_id, $message_id)
    $stmt = $pdo->prepare("SELECT COUNT(*) as month_completions
         FROM habit_logs hl
         JOIN habits h ON hl.habit_id = h.id
-        WHERE h.user_id = :user_id AND hl.completed_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+        WHERE hl.completed_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)");
+   
    $stmt->execute();
    $month_stats = $stmt->fetch();
 
    // بهترین عادت‌ها (بیشترین انجام)
    $stmt = $pdo->prepare("SELECT name, total_completed FROM habits 
-        WHERE user_id = :user_id AND is_active = 1 AND total_completed > 0
+        WHERE is_active = 1 AND total_completed > 0
         ORDER BY total_completed DESC LIMIT 3");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   
    $stmt->execute();
    $top_habits = $stmt->fetchAll();
 
@@ -515,8 +515,8 @@ function showHabitsStats($chat_id, $user_id, $message_id)
    $stmt = $pdo->prepare("SELECT COUNT(*) as today_completed
         FROM habit_logs hl
         JOIN habits h ON hl.habit_id = h.id
-        WHERE h.user_id = :user_id AND hl.completed_date = CURDATE()");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+        WHERE hl.completed_date = CURDATE()");
+   
    $stmt->execute();
    $today_stats = $stmt->fetch();
 
@@ -608,9 +608,9 @@ function completeHabit($chat_id, $user_id, $habit_id, $message_id)
    global $pdo, $callback_query_id;
 
    // بررسی وجود عادت
-   $stmt = $pdo->prepare("SELECT * FROM habits WHERE id = :id AND user_id = :user_id AND is_active = 1");
+   $stmt = $pdo->prepare("SELECT * FROM habits WHERE id = :id AND is_active = 1");
    $stmt->bindValue(':id', $habit_id, PDO::PARAM_INT);
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   
    $stmt->execute();
    $habit = $stmt->fetch();
 
@@ -634,9 +634,9 @@ function completeHabit($chat_id, $user_id, $habit_id, $message_id)
       $pdo->beginTransaction();
 
       // ثبت لاگ
-      $stmt = $pdo->prepare("INSERT INTO habit_logs (habit_id, user_id, completed_date, created_at) VALUES (:habit_id, :user_id, CURDATE(), NOW())");
+      $stmt = $pdo->prepare("INSERT INTO habit_logs (habit_id, completed_date, created_at) VALUES (:habit_id, CURDATE(), NOW())");
       $stmt->bindValue(':habit_id', $habit_id, PDO::PARAM_INT);
-      $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+      
       $stmt->execute();
 
       // بروزرسانی شمارنده
@@ -664,9 +664,9 @@ function uncompleteHabit($chat_id, $user_id, $habit_id, $message_id)
       $pdo->beginTransaction();
 
       // حذف لاگ امروز
-      $stmt = $pdo->prepare("DELETE FROM habit_logs WHERE habit_id = :habit_id AND user_id = :user_id AND completed_date = CURDATE()");
+      $stmt = $pdo->prepare("DELETE FROM habit_logs WHERE habit_id = :habit_id AND completed_date = CURDATE()");
       $stmt->bindValue(':habit_id', $habit_id, PDO::PARAM_INT);
-      $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+      
       $deleted = $stmt->execute() && $stmt->rowCount() > 0;
 
       if ($deleted) {
@@ -692,9 +692,9 @@ function toggleHabitStatus($chat_id, $user_id, $habit_id, $message_id)
 {
    global $pdo, $callback_query_id;
 
-   $stmt = $pdo->prepare("UPDATE habits SET is_active = NOT is_active WHERE id = :id AND user_id = :user_id");
+   $stmt = $pdo->prepare("UPDATE habits SET is_active = NOT is_active WHERE id = :id");
    $stmt->bindValue(':id', $habit_id, PDO::PARAM_INT);
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   
 
    if ($stmt->execute()) {
       answerCallbackQuery($callback_query_id, "✅ وضعیت تغییر کرد");
@@ -708,9 +708,9 @@ function confirmDeleteHabit($chat_id, $user_id, $message_id, $habit_id)
 {
    global $pdo;
 
-   $stmt = $pdo->prepare("SELECT name FROM habits WHERE id = :id AND user_id = :user_id");
+   $stmt = $pdo->prepare("SELECT name FROM habits WHERE id = :id");
    $stmt->bindValue(':id', $habit_id, PDO::PARAM_INT);
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   
    $stmt->execute();
    $habit = $stmt->fetch();
 
@@ -749,9 +749,9 @@ function deleteHabit($chat_id, $user_id, $message_id, $habit_id)
       $stmt->execute();
 
       // حذف عادت
-      $stmt = $pdo->prepare("DELETE FROM habits WHERE id = :id AND user_id = :user_id");
+      $stmt = $pdo->prepare("DELETE FROM habits WHERE id = :id");
       $stmt->bindValue(':id', $habit_id, PDO::PARAM_INT);
-      $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+      
       $stmt->execute();
 
       $pdo->commit();
@@ -787,8 +787,8 @@ function saveHabit($chat_id, $user_id, $data)
 {
    global $pdo;
 
-   $stmt = $pdo->prepare("INSERT INTO habits (user_id, name, created_at) VALUES (:user_id, :name, NOW())");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   $stmt = $pdo->prepare("INSERT INTO habits (name, created_at) VALUES (:name, NOW())");
+   
    $stmt->bindValue(':name', $data['name'], PDO::PARAM_STR);
 
    if ($stmt->execute()) {
@@ -817,3 +817,4 @@ function saveHabit($chat_id, $user_id, $data)
       sendMessage($chat_id, "❌ خطا در ثبت عادت. لطفاً دوباره تلاش کنید.");
    }
 }
+
