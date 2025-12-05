@@ -1162,24 +1162,6 @@ function processFinancialForm($chat_id, $user_id, $text, $step)
    }
 }
 
-function validatePersianDate($date_str)
-{
-   // تبدیل تاریخ شمسی به میلادی
-   if (preg_match('/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/', $date_str, $matches)) {
-      $year = intval($matches[1]);
-      $month = intval($matches[2]);
-      $day = intval($matches[3]);
-
-      if ($year >= 1400 && $year <= 1450 && $month >= 1 && $month <= 12 && $day >= 1 && $day <= 31) {
-         // استفاده از تابع jalali_to_gregorian از jdf.php
-         list($gy, $gm, $gd) = jalali_to_gregorian($year, $month, $day);
-         return sprintf('%04d-%02d-%02d', $gy, $gm, $gd);
-      }
-   }
-
-   return false;
-}
-
 function saveDebtCredit($chat_id, $user_id, $type, $title, $person_name, $amount, $due_date = null, $description = null)
 {
    global $pdo;
@@ -1272,4 +1254,5 @@ function saveCheck($chat_id, $user_id, $type, $account_holder, $amount, $due_dat
       sendMessage($chat_id, "❌ خطا در ثبت اطلاعات. لطفاً دوباره تلاش کنید.");
    }
 }
+
 
