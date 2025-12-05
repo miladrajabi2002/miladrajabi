@@ -434,8 +434,8 @@ function processIncomeForm($chat_id, $user_id, $text, $step)
          break;
          
       case 'income_add_date':
-         $date = parseDate($text);
-         if (!$date) {
+         $due_date = validatePersianDate($text);   
+         if (!$due_date) {
             sendMessage($chat_id, "❌ فرمت تاریخ نامعتبر است. لطفاً دوباره وارد کنید.");
             return;
          }
