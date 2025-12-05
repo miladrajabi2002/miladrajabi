@@ -4,8 +4,8 @@ function showNotesMenu($chat_id, $user_id, $message_id)
 {
    global $pdo;
 
-   $stmt = $pdo->prepare("SELECT COUNT(*) FROM notes WHERE user_id = :user_id");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   $stmt = $pdo->prepare("SELECT COUNT(*) FROM notes");
+   
    $stmt->execute();
    $count = $stmt->fetchColumn();
 
@@ -124,8 +124,7 @@ function saveNote($user_id, $title, $content)
 {
    global $pdo;
 
-   $stmt = $pdo->prepare("INSERT INTO notes (user_id, title, content, created_at) VALUES (:user_id, :title, :content, NOW())");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   $stmt = $pdo->prepare("INSERT INTO notes (title, content, created_at) VALUES (:title, :content, NOW())");
    $stmt->bindValue(':title', $title, PDO::PARAM_STR);
    $stmt->bindValue(':content', $content, PDO::PARAM_STR);
 
@@ -144,15 +143,15 @@ function showNotesList($chat_id, $user_id, $message_id, $page = 1)
    $offset = ($page - 1) * $limit;
 
    // اصلاح کوئری SQL
-   $stmt = $pdo->prepare("SELECT * FROM notes WHERE user_id = :user_id ORDER BY created_at DESC LIMIT :limit OFFSET :offset");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   $stmt = $pdo->prepare("SELECT * FROM notes ORDER BY created_at DESC LIMIT :limit OFFSET :offset");
+   
    $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
    $stmt->execute();
    $notes = $stmt->fetchAll();
 
-   $stmt = $pdo->prepare("SELECT COUNT(*) FROM notes WHERE user_id = :user_id");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   $stmt = $pdo->prepare("SELECT COUNT(*) FROM notes");
+   
    $stmt->execute();
    $total = $stmt->fetchColumn();
 
@@ -244,9 +243,9 @@ function viewNote($chat_id, $user_id, $note_id, $message_id)
 {
    global $pdo;
 
-   $stmt = $pdo->prepare("SELECT * FROM notes WHERE id = :id AND user_id = :user_id");
+   $stmt = $pdo->prepare("SELECT * FROM notes WHERE id = :id");
    $stmt->bindValue(':id', $note_id, PDO::PARAM_INT);
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   
    $stmt->execute();
    $note = $stmt->fetch();
 
@@ -289,9 +288,9 @@ function confirmDeleteNote($chat_id, $user_id, $note_id, $message_id)
 {
    global $pdo;
 
-   $stmt = $pdo->prepare("SELECT title FROM notes WHERE id = :id AND user_id = :user_id");
+   $stmt = $pdo->prepare("SELECT title FROM notes WHERE id = :id");
    $stmt->bindValue(':id', $note_id, PDO::PARAM_INT);
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   
    $stmt->execute();
    $note = $stmt->fetch();
 
@@ -321,9 +320,9 @@ function deleteNote($chat_id, $user_id, $note_id, $message_id)
 {
    global $pdo;
 
-   $stmt = $pdo->prepare("DELETE FROM notes WHERE id = :id AND user_id = :user_id");
+   $stmt = $pdo->prepare("DELETE FROM notes WHERE id = :id");
    $stmt->bindValue(':id', $note_id, PDO::PARAM_INT);
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   
 
    if ($stmt->execute()) {
       global $callback_query_id;
@@ -339,9 +338,9 @@ function startNoteEdit($chat_id, $user_id, $note_id, $message_id)
 {
    global $pdo;
 
-   $stmt = $pdo->prepare("SELECT * FROM notes WHERE id = :id AND user_id = :user_id");
+   $stmt = $pdo->prepare("SELECT * FROM notes WHERE id = :id");
    $stmt->bindValue(':id', $note_id, PDO::PARAM_INT);
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   
    $stmt->execute();
    $note = $stmt->fetch();
 
@@ -370,10 +369,10 @@ function updateNote($chat_id, $user_id, $note_id, $new_content)
 {
    global $pdo;
 
-   $stmt = $pdo->prepare("UPDATE notes SET content = :content, updated_at = NOW() WHERE id = :id AND user_id = :user_id");
+   $stmt = $pdo->prepare("UPDATE notes SET content = :content, updated_at = NOW() WHERE id = :id");
    $stmt->bindValue(':content', $new_content, PDO::PARAM_STR);
    $stmt->bindValue(':id', $note_id, PDO::PARAM_INT);
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   
 
    if ($stmt->execute()) {
       updateUser($user_id, ['step' => 'completed']);
@@ -428,7 +427,6 @@ function searchNotes($chat_id, $user_id, $query)
       SELECT *, 
              MATCH(content) AGAINST(:query1 IN NATURAL LANGUAGE MODE) as relevance
       FROM notes 
-      WHERE user_id = :user_id 
       AND (
          MATCH(content) AGAINST(:query2 IN NATURAL LANGUAGE MODE) 
          OR content LIKE :search_term
@@ -439,7 +437,7 @@ function searchNotes($chat_id, $user_id, $query)
 
    $search_term = "%$query%";
    $stmt->bindValue(':query1', $query, PDO::PARAM_STR);
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   
    $stmt->bindValue(':query2', $query, PDO::PARAM_STR);
    $stmt->bindValue(':search_term', $search_term, PDO::PARAM_STR);
    $stmt->execute();
@@ -500,3 +498,4 @@ function searchNotes($chat_id, $user_id, $query)
    updateUser($user_id, ['step' => 'completed']);
    sendMessage($chat_id, $text, $keyboard);
 }
+
