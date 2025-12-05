@@ -8,8 +8,7 @@ function showFinanceMenu($chat_id, $user_id, $message_id)
         SUM(CASE WHEN type = 'credit' AND is_paid = 0 THEN amount ELSE 0 END) as total_credit,
         COUNT(CASE WHEN type = 'debt' AND is_paid = 0 THEN 1 END) as debt_count,
         COUNT(CASE WHEN type = 'credit' AND is_paid = 0 THEN 1 END) as credit_count
-        FROM finances WHERE user_id = :user_id");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+        FROM finances");
    $stmt->execute();
    $financial_summary = $stmt->fetch();
 
@@ -19,8 +18,7 @@ function showFinanceMenu($chat_id, $user_id, $message_id)
         COUNT(CASE WHEN type = 'issued' AND status = 'pending' THEN 1 END) as issued_pending,
         SUM(CASE WHEN type = 'received' AND status = 'pending' THEN amount ELSE 0 END) as received_amount,
         SUM(CASE WHEN type = 'issued' AND status = 'pending' THEN amount ELSE 0 END) as issued_amount
-        FROM checks WHERE user_id = :user_id");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+        FROM checks");
    $stmt->execute();
    $check_summary = $stmt->fetch();
 
@@ -195,16 +193,14 @@ function showDebtsList($chat_id, $user_id, $message_id, $page = 1)
    $limit = 6;
    $offset = ($page - 1) * $limit;
 
-   $stmt = $pdo->prepare("SELECT * FROM finances WHERE user_id = :user_id AND type = :type ORDER BY is_paid ASC, due_date ASC LIMIT :limit OFFSET :offset");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   $stmt = $pdo->prepare("SELECT * FROM finances WHERE type = :type ORDER BY is_paid ASC, due_date ASC LIMIT :limit OFFSET :offset");
    $stmt->bindValue(':type', 'debt', PDO::PARAM_STR);
    $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
    $stmt->execute();
    $debts = $stmt->fetchAll();
 
-   $stmt = $pdo->prepare("SELECT COUNT(*) FROM finances WHERE user_id = :user_id AND type = :type");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   $stmt = $pdo->prepare("SELECT COUNT(*) FROM finances WHERE type = :type");
    $stmt->bindValue(':type', 'debt', PDO::PARAM_STR);
    $stmt->execute();
    $total = $stmt->fetchColumn();
@@ -295,16 +291,14 @@ function showCreditsList($chat_id, $user_id, $message_id, $page = 1)
    $limit = 6;
    $offset = ($page - 1) * $limit;
 
-   $stmt = $pdo->prepare("SELECT * FROM finances WHERE user_id = :user_id AND type = :type ORDER BY is_paid ASC, due_date ASC LIMIT :limit OFFSET :offset");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   $stmt = $pdo->prepare("SELECT * FROM finances WHERE type = :type ORDER BY is_paid ASC, due_date ASC LIMIT :limit OFFSET :offset");
    $stmt->bindValue(':type', 'credit', PDO::PARAM_STR);
    $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
    $stmt->execute();
    $credits = $stmt->fetchAll();
 
-   $stmt = $pdo->prepare("SELECT COUNT(*) FROM finances WHERE user_id = :user_id AND type = :type");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   $stmt = $pdo->prepare("SELECT COUNT(*) FROM finances WHERE type = :type");
    $stmt->bindValue(':type', 'credit', PDO::PARAM_STR);
    $stmt->execute();
    $total = $stmt->fetchColumn();
@@ -395,16 +389,14 @@ function showChecksList($chat_id, $user_id, $message_id, $type = 'received', $pa
    $limit = 6;
    $offset = ($page - 1) * $limit;
 
-   $stmt = $pdo->prepare("SELECT * FROM checks WHERE user_id = :user_id AND type = :type ORDER BY status ASC, due_date ASC LIMIT :limit OFFSET :offset");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   $stmt = $pdo->prepare("SELECT * FROM checks WHERE type = :type ORDER BY status ASC, due_date ASC LIMIT :limit OFFSET :offset");
    $stmt->bindValue(':type', $type, PDO::PARAM_STR);
    $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
    $stmt->execute();
    $checks = $stmt->fetchAll();
 
-   $stmt = $pdo->prepare("SELECT COUNT(*) FROM checks WHERE user_id = :user_id AND type = :type");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   $stmt = $pdo->prepare("SELECT COUNT(*) FROM checks WHERE type = :type");
    $stmt->bindValue(':type', $type, PDO::PARAM_STR);
    $stmt->execute();
    $total = $stmt->fetchColumn();
@@ -512,8 +504,7 @@ function showFinancialReport($chat_id, $user_id, $message_id)
         SUM(CASE WHEN type = 'credit' AND is_paid = 0 THEN amount ELSE 0 END) as active_credit,
         COUNT(CASE WHEN type = 'debt' AND is_paid = 0 AND due_date <= DATE_ADD(CURDATE(), INTERVAL 7 DAY) THEN 1 END) as urgent_debts,
         COUNT(CASE WHEN type = 'credit' AND is_paid = 0 AND due_date <= DATE_ADD(CURDATE(), INTERVAL 7 DAY) THEN 1 END) as urgent_credits
-        FROM finances WHERE user_id = :user_id");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+        FROM finances");
    $stmt->execute();
    $debt_credit_summary = $stmt->fetch();
 
@@ -522,16 +513,14 @@ function showFinancialReport($chat_id, $user_id, $message_id)
         SUM(CASE WHEN type = 'received' AND status = 'pending' THEN amount ELSE 0 END) as pending_received_checks,
         SUM(CASE WHEN type = 'issued' AND status = 'pending' THEN amount ELSE 0 END) as pending_issued_checks,
         COUNT(CASE WHEN status = 'pending' AND due_date <= DATE_ADD(CURDATE(), INTERVAL 3 DAY) THEN 1 END) as urgent_checks
-        FROM checks WHERE user_id = :user_id");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+        FROM checks");
    $stmt->execute();
    $check_summary = $stmt->fetch();
 
    // چک‌های نزدیک سررسید
    $stmt = $pdo->prepare("SELECT type, account_holder, amount, due_date, status FROM checks 
-        WHERE user_id = :user_id AND status = 'pending' AND due_date <= DATE_ADD(CURDATE(), INTERVAL 7 DAY) 
+        WHERE status = 'pending' AND due_date <= DATE_ADD(CURDATE(), INTERVAL 7 DAY) 
         ORDER BY due_date ASC LIMIT 5");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
    $stmt->execute();
    $upcoming_checks = $stmt->fetchAll();
 
@@ -670,9 +659,8 @@ function viewFinancialItem($chat_id, $user_id, $message_id, $type, $item_id)
 
    if (strpos($type, 'check') === 0) {
       $check_type = str_replace('check_', '', $type);
-      $stmt = $pdo->prepare("SELECT * FROM checks WHERE id = :id AND user_id = :user_id AND type = :type");
+      $stmt = $pdo->prepare("SELECT * FROM checks WHERE id = :id AND type = :type");
       $stmt->bindValue(':id', $item_id, PDO::PARAM_INT);
-      $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
       $stmt->bindValue(':type', $check_type, PDO::PARAM_STR);
       $stmt->execute();
       $item = $stmt->fetch();
@@ -684,9 +672,8 @@ function viewFinancialItem($chat_id, $user_id, $message_id, $type, $item_id)
 
       viewCheckDetails($chat_id, $user_id, $message_id, $item, $check_type);
    } else {
-      $stmt = $pdo->prepare("SELECT * FROM finances WHERE id = :id AND user_id = :user_id AND type = :type");
+      $stmt = $pdo->prepare("SELECT * FROM finances WHERE id = :id AND type = :type");
       $stmt->bindValue(':id', $item_id, PDO::PARAM_INT);
-      $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
       $stmt->bindValue(':type', $type, PDO::PARAM_STR);
       $stmt->execute();
       $item = $stmt->fetch();
@@ -866,9 +853,8 @@ function markAsPaid($chat_id, $user_id, $message_id, $type, $item_id)
 {
    global $pdo;
 
-   $stmt = $pdo->prepare("UPDATE finances SET is_paid = 1, paid_at = NOW() WHERE id = :id AND user_id = :user_id AND type = :type");
+   $stmt = $pdo->prepare("UPDATE finances SET is_paid = 1, paid_at = NOW() WHERE id = :id AND type = :type");
    $stmt->bindValue(':id', $item_id, PDO::PARAM_INT);
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
    $stmt->bindValue(':type', $type, PDO::PARAM_STR);
 
    if ($stmt->execute()) {
@@ -915,13 +901,11 @@ function deleteFinancialItem($chat_id, $user_id, $message_id, $type, $item_id)
    global $pdo;
 
    if (strpos($type, 'check') === 0) {
-      $stmt = $pdo->prepare("DELETE FROM checks WHERE id = :id AND user_id = :user_id");
+      $stmt = $pdo->prepare("DELETE FROM checks WHERE id = :id");
       $stmt->bindValue(':id', $item_id, PDO::PARAM_INT);
-      $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
    } else {
-      $stmt = $pdo->prepare("DELETE FROM finances WHERE id = :id AND user_id = :user_id");
+      $stmt = $pdo->prepare("DELETE FROM finances WHERE id = :id");
       $stmt->bindValue(':id', $item_id, PDO::PARAM_INT);
-      $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
    }
 
    if ($stmt->execute()) {
@@ -949,12 +933,11 @@ function updateCheckStatus($chat_id, $user_id, $check_id, $status, $message_id)
 {
    global $pdo;
 
-   $stmt = $pdo->prepare("UPDATE checks SET status = :status, cashed_at = :cashed_at WHERE id = :id AND user_id = :user_id");
+   $stmt = $pdo->prepare("UPDATE checks SET status = :status, cashed_at = :cashed_at WHERE id = :id");
    $cashed_at = $status === 'cashed' ? date('Y-m-d H:i:s') : null;
    $stmt->bindValue(':status', $status, PDO::PARAM_STR);
    $stmt->bindValue(':cashed_at', $cashed_at, PDO::PARAM_STR);
    $stmt->bindValue(':id', $check_id, PDO::PARAM_INT);
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
 
    if ($stmt->execute()) {
       global $callback_query_id;
@@ -962,9 +945,8 @@ function updateCheckStatus($chat_id, $user_id, $check_id, $status, $message_id)
       answerCallbackQuery($callback_query_id, "✅ چک $status_text");
 
       // نمایش جزئیات بروزشده
-      $stmt = $pdo->prepare("SELECT *, type FROM checks WHERE id = :id AND user_id = :user_id");
+      $stmt = $pdo->prepare("SELECT *, type FROM checks WHERE id = :id");
       $stmt->bindValue(':id', $check_id, PDO::PARAM_INT);
-      $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
       $stmt->execute();
       $check = $stmt->fetch();
 
@@ -1202,8 +1184,7 @@ function saveDebtCredit($chat_id, $user_id, $type, $title, $person_name, $amount
 {
    global $pdo;
 
-   $stmt = $pdo->prepare("INSERT INTO finances (user_id, type, title, person_name, amount, due_date, description, created_at) VALUES (:user_id, :type, :title, :person_name, :amount, :due_date, :description, NOW())");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   $stmt = $pdo->prepare("INSERT INTO finances (type, title, person_name, amount, due_date, description, created_at) VALUES (:type, :title, :person_name, :amount, :due_date, :description, NOW())");
    $stmt->bindValue(':type', $type, PDO::PARAM_STR);
    $stmt->bindValue(':title', $title, PDO::PARAM_STR);
    $stmt->bindValue(':person_name', $person_name, PDO::PARAM_STR);
@@ -1249,8 +1230,7 @@ function saveCheck($chat_id, $user_id, $type, $account_holder, $amount, $due_dat
 {
    global $pdo;
 
-   $stmt = $pdo->prepare("INSERT INTO checks (user_id, type, account_holder, amount, due_date, check_number, bank_name, description, created_at) VALUES (:user_id, :type, :account_holder, :amount, :due_date, :check_number, :bank_name, :description, NOW())");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   $stmt = $pdo->prepare("INSERT INTO checks (type, account_holder, amount, due_date, check_number, bank_name, description, created_at) VALUES (:type, :account_holder, :amount, :due_date, :check_number, :bank_name, :description, NOW())");
    $stmt->bindValue(':type', $type, PDO::PARAM_STR);
    $stmt->bindValue(':account_holder', $account_holder, PDO::PARAM_STR);
    $stmt->bindValue(':amount', $amount, PDO::PARAM_INT);
@@ -1292,3 +1272,4 @@ function saveCheck($chat_id, $user_id, $type, $account_holder, $amount, $due_dat
       sendMessage($chat_id, "❌ خطا در ثبت اطلاعات. لطفاً دوباره تلاش کنید.");
    }
 }
+
