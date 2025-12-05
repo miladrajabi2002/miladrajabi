@@ -8,7 +8,7 @@ require_once 'includes/functions.php';
 require_once 'includes/jdf.php';
 
 try {
-   function generateSmartSummary($user_id)
+   function generateSmartSummary()
    {
       global $pdo;
 
@@ -19,10 +19,10 @@ try {
       // 🔔 یادآورهای امروز
       $stmt = $pdo->prepare(
          "SELECT COUNT(*) FROM reminders 
-               WHERE user_id = ? AND is_active = 1 
+               WHERE is_active = 1 
                AND DATE(reminder_time) = ?"
       );
-      $stmt->execute([$user_id, $today]);
+      $stmt->execute([$today]);
       $today_reminders = $stmt->fetchColumn();
 
       if ($today_reminders > 0) {
@@ -33,13 +33,13 @@ try {
       $stmt = $pdo->prepare(
          "SELECT h.name FROM habits h
                LEFT JOIN habit_logs hl ON h.id = hl.habit_id AND hl.completed_date = ?
-               WHERE h.user_id = ? AND h.is_active = 1 AND hl.id IS NULL"
+               WHERE h.is_active = 1 AND hl.id IS NULL"
       );
-      $stmt->execute([$today, $user_id]);
+      $stmt->execute([$today]);
       $pending_habits = $stmt->fetchAll();
 
-      $stmt = $pdo->prepare("SELECT COUNT(*) FROM habits WHERE user_id = ? AND is_active = 1");
-      $stmt->execute([$user_id]);
+      $stmt = $pdo->prepare("SELECT COUNT(*) FROM habits WHERE is_active = 1");
+      $stmt->execute();
       $total_habits = $stmt->fetchColumn();
 
       if ($total_habits > 0) {
@@ -53,12 +53,12 @@ try {
       // 🎯 اهداف نزدیک به سررسید (30 روز)
       $stmt = $pdo->prepare(
          "SELECT title, target_date, progress FROM goals 
-               WHERE user_id = ? AND is_completed = 0 
+               WHERE is_completed = 0 
                AND target_date IS NOT NULL 
                AND target_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY)
                ORDER BY target_date ASC LIMIT 2"
       );
-      $stmt->execute([$user_id]);
+      $stmt->execute();
       $upcoming_goals = $stmt->fetchAll();
 
       foreach ($upcoming_goals as $goal) {
@@ -69,11 +69,11 @@ try {
       // 📄 اسناد منقضی‌شونده (30 روز)
       $stmt = $pdo->prepare(
          "SELECT name, expire_date FROM documents 
-               WHERE user_id = ? AND expire_date IS NOT NULL 
+               WHERE expire_date IS NOT NULL 
                AND expire_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY)
                ORDER BY expire_date ASC LIMIT 2"
       );
-      $stmt->execute([$user_id]);
+      $stmt->execute();
       $expiring_docs = $stmt->fetchAll();
 
       foreach ($expiring_docs as $doc) {
@@ -84,11 +84,11 @@ try {
       // 💰 چک‌های سررسید (7 روز)
       $stmt = $pdo->prepare(
          "SELECT type, account_holder, amount, due_date FROM checks 
-               WHERE user_id = ? AND status = 'pending' 
+               WHERE status = 'pending' 
                AND due_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)
                ORDER BY due_date ASC LIMIT 2"
       );
-      $stmt->execute([$user_id]);
+      $stmt->execute();
       $due_checks = $stmt->fetchAll();
 
       foreach ($due_checks as $check) {
@@ -101,11 +101,11 @@ try {
       // 💳 بدهی/طلب سررسید
       $stmt = $pdo->prepare(
          "SELECT type, title, person_name, amount, due_date FROM finances 
-               WHERE user_id = ? AND is_paid = 0 AND due_date IS NOT NULL
+               WHERE is_paid = 0 AND due_date IS NOT NULL
                AND due_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)
                ORDER BY due_date ASC LIMIT 2"
       );
-      $stmt->execute([$user_id]);
+      $stmt->execute();
       $due_debts = $stmt->fetchAll();
 
       foreach ($due_debts as $debt) {
@@ -117,9 +117,9 @@ try {
 
       // 🎂 تولدهای امروز
       $stmt = $pdo->prepare("SELECT name FROM contacts 
-        WHERE user_id = ? AND birthday IS NOT NULL
+        WHERE birthday IS NOT NULL
         AND DATE_FORMAT(birthday, '%m-%d') = DATE_FORMAT(CURDATE(), '%m-%d')");
-      $stmt->execute([$user_id]);
+      $stmt->execute();
       $today_birthdays = $stmt->fetchAll();
 
       if (!empty($today_birthdays)) {
@@ -143,11 +143,11 @@ try {
                 )
         END as days_until
         FROM contacts 
-        WHERE user_id = ? AND birthday IS NOT NULL
+        WHERE birthday IS NOT NULL
         HAVING days_until > 0 AND days_until <= 7
         ORDER BY days_until ASC
         LIMIT 3");
-      $stmt->execute([$user_id]);
+      $stmt->execute();
       $upcoming_birthdays = $stmt->fetchAll();
 
       foreach ($upcoming_birthdays as $birthday) {
@@ -219,10 +219,9 @@ try {
       global $pdo;
       $new_title = trim($new_title);
 
-      $stmt = $pdo->prepare("UPDATE reminders SET title = :title WHERE id = :id AND user_id = :user_id");
+      $stmt = $pdo->prepare("UPDATE reminders SET title = :title WHERE id = :id");
       $stmt->bindParam(':title', $new_title, PDO::PARAM_STR);
       $stmt->bindParam(':id', $reminder_id, PDO::PARAM_INT);
-      $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
 
       if ($stmt->execute()) {
          updateUser($user_id, ['step' => 'completed']);
@@ -260,7 +259,7 @@ try {
       $user = getUser($user_id);
       $name = $user['full_name'] ?? $user['first_name'];
 
-      $summary = generateSmartSummary($user_id);
+      $summary = generateSmartSummary();
 
       if ($text == null) {
          $menu_text = "🏠 سلام $name عزیز!\n\n";
