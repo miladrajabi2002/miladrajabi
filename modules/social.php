@@ -5,16 +5,16 @@ function showSocialMenu($chat_id, $user_id, $message_id)
    global $pdo;
 
    // آمار کلی مخاطبین
-   $stmt = $pdo->prepare("SELECT COUNT(*) as total_contacts FROM contacts WHERE user_id = :user_id");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   $stmt = $pdo->prepare("SELECT COUNT(*) as total_contacts FROM contacts");
+   
    $stmt->execute();
    $stats = $stmt->fetch();
 
    // تولدهای امروز
    $stmt = $pdo->prepare("SELECT name FROM contacts 
-        WHERE user_id = :user_id AND birthday IS NOT NULL
+        WHERE birthday IS NOT NULL
         AND DATE_FORMAT(birthday, '%m-%d') = DATE_FORMAT(CURDATE(), '%m-%d')");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   
    $stmt->execute();
    $today_birthdays = $stmt->fetchAll();
 
@@ -25,11 +25,11 @@ function showSocialMenu($chat_id, $user_id, $message_id)
             CURDATE()
         ) as days_until
         FROM contacts 
-        WHERE user_id = :user_id AND birthday IS NOT NULL
+        WHERE birthday IS NOT NULL
         HAVING days_until > 0 AND days_until <= 7
         ORDER BY days_until ASC
         LIMIT 3");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   
    $stmt->execute();
    $upcoming_birthdays = $stmt->fetchAll();
 
@@ -38,13 +38,12 @@ function showSocialMenu($chat_id, $user_id, $message_id)
         CONCAT(DATEDIFF(CURDATE(), last_contact_date), ' روز پیش') as last_contact_text,
         DATEDIFF(CURDATE(), last_contact_date) as days_since
         FROM contacts 
-        WHERE user_id = :user_id 
         AND contact_frequency > 0
         AND last_contact_date IS NOT NULL 
         AND DATEDIFF(CURDATE(), last_contact_date) >= contact_frequency
         ORDER BY days_since DESC
         LIMIT 3");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   
    $stmt->execute();
    $contact_reminders = $stmt->fetchAll();
 
@@ -187,15 +186,15 @@ function showContactsList($chat_id, $user_id, $message_id, $page = 1)
    $limit = 8;
    $offset = ($page - 1) * $limit;
 
-   $stmt = $pdo->prepare("SELECT * FROM contacts WHERE user_id = :user_id ORDER BY name ASC LIMIT :limit OFFSET :offset");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   $stmt = $pdo->prepare("SELECT * FROM contacts ORDER BY name ASC LIMIT :limit OFFSET :offset");
+   
    $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
    $stmt->execute();
    $contacts = $stmt->fetchAll();
 
-   $stmt = $pdo->prepare("SELECT COUNT(*) FROM contacts WHERE user_id = :user_id");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   $stmt = $pdo->prepare("SELECT COUNT(*) FROM contacts");
+   
    $stmt->execute();
    $total = $stmt->fetchColumn();
 
@@ -288,9 +287,9 @@ function viewContactDetails($chat_id, $user_id, $message_id, $contact_id)
 {
    global $pdo;
 
-   $stmt = $pdo->prepare("SELECT * FROM contacts WHERE id = :id AND user_id = :user_id");
+   $stmt = $pdo->prepare("SELECT * FROM contacts WHERE id = :id");
    $stmt->bindValue(':id', $contact_id, PDO::PARAM_INT);
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   
    $stmt->execute();
    $contact = $stmt->fetch();
 
@@ -418,9 +417,8 @@ function confirmDeleteContact($chat_id, $user_id, $message_id, $contact_id)
 {
    global $pdo;
 
-   $stmt = $pdo->prepare("SELECT name FROM contacts WHERE id = :id AND user_id = :user_id");
+   $stmt = $pdo->prepare("SELECT name FROM contacts WHERE id = :id");
    $stmt->bindValue(':id', $contact_id, PDO::PARAM_INT);
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
    $stmt->execute();
    $contact = $stmt->fetch();
 
@@ -450,9 +448,9 @@ function deleteContact($chat_id, $user_id, $message_id, $contact_id)
 {
    global $pdo;
 
-   $stmt = $pdo->prepare("DELETE FROM contacts WHERE id = :id AND user_id = :user_id");
+   $stmt = $pdo->prepare("DELETE FROM contacts WHERE id = :id");
    $stmt->bindValue(':id', $contact_id, PDO::PARAM_INT);
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   
 
    if ($stmt->execute()) {
       global $callback_query_id;
@@ -468,9 +466,9 @@ function markAsContacted($chat_id, $user_id, $message_id, $contact_id)
 {
    global $pdo;
 
-   $stmt = $pdo->prepare("UPDATE contacts SET last_contact_date = CURDATE() WHERE id = :id AND user_id = :user_id");
+   $stmt = $pdo->prepare("UPDATE contacts SET last_contact_date = CURDATE() WHERE id = :id");
    $stmt->bindValue(':id', $contact_id, PDO::PARAM_INT);
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   
 
    if ($stmt->execute()) {
       global $callback_query_id;
@@ -629,9 +627,8 @@ function saveContact($chat_id, $user_id, $data)
 {
    global $pdo;
 
-   $stmt = $pdo->prepare("INSERT INTO contacts (user_id, name, phone, birthday, relationship, notes, contact_frequency, created_at) 
-                          VALUES (:user_id, :name, :phone, :birthday, :relationship, :notes, :contact_frequency, NOW())");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   $stmt = $pdo->prepare("INSERT INTO contacts (name, phone, birthday, relationship, notes, contact_frequency, created_at) 
+                          VALUES (:name, :phone, :birthday, :relationship, :notes, :contact_frequency, NOW())");
    $stmt->bindValue(':name', $data['name'], PDO::PARAM_STR);
    $stmt->bindValue(':phone', $data['phone'], PDO::PARAM_STR);
    $stmt->bindValue(':birthday', $data['birthday'], PDO::PARAM_STR);
@@ -684,12 +681,11 @@ function searchContacts($chat_id, $user_id, $query)
    $search_term = "%$query%";
    $stmt = $pdo->prepare("
         SELECT * FROM contacts 
-        WHERE user_id = :user_id 
         AND (name LIKE :search1 OR phone LIKE :search2 OR relationship LIKE :search3 OR notes LIKE :search4)
         ORDER BY name ASC
         LIMIT 10
     ");
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   
    $stmt->bindValue(':search1', $search_term, PDO::PARAM_STR);
    $stmt->bindValue(':search2', $search_term, PDO::PARAM_STR);
    $stmt->bindValue(':search3', $search_term, PDO::PARAM_STR);
@@ -825,9 +821,9 @@ function startEditContact($chat_id, $user_id, $message_id, $contact_id, $field)
 {
    global $pdo;
 
-   $stmt = $pdo->prepare("SELECT * FROM contacts WHERE id = :id AND user_id = :user_id");
+   $stmt = $pdo->prepare("SELECT * FROM contacts WHERE id = :id");
    $stmt->bindValue(':id', $contact_id, PDO::PARAM_INT);
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   
    $stmt->execute();
    $contact = $stmt->fetch();
 
@@ -906,10 +902,10 @@ function updateContactField($chat_id, $user_id, $contact_id, $field, $value)
    }
 
    // به‌روزرسانی در دیتابیس
-   $stmt = $pdo->prepare("UPDATE contacts SET $field = :value, updated_at = NOW() WHERE id = :id AND user_id = :user_id");
+   $stmt = $pdo->prepare("UPDATE contacts SET $field = :value, updated_at = NOW() WHERE id = :id");
    $stmt->bindValue(':value', $value ?: null, PDO::PARAM_STR);
    $stmt->bindValue(':id', $contact_id, PDO::PARAM_INT);
-   $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+   
 
    if ($stmt->execute()) {
       updateUser($user_id, ['step' => 'completed']);
@@ -975,3 +971,4 @@ function validatePersianDate($date)
    $gregorian = jalali_to_gregorian($year, $month, $day);
    return sprintf('%04d-%02d-%02d', $gregorian[0], $gregorian[1], $gregorian[2]);
 }
+
