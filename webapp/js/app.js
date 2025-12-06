@@ -380,13 +380,16 @@ async function loadDashboard() {
         
         await loadTodayHabits();
         
-        if (income_chart && income_chart.length > 0) {
-            renderIncomeChart(income_chart);
-        }
-        
-        if (habits_chart && habits_chart.length > 0) {
-            renderHabitsChart(habits_chart);
-        }
+        // حل مشکل بار اول: اضافه کردن تاخیر برای Chart.js بعد از بارگذاری صفحه
+        setTimeout(() => {
+            if (income_chart && income_chart.length > 0) {
+                renderIncomeChart(income_chart);
+            }
+            
+            if (habits_chart && habits_chart.length > 0) {
+                renderHabitsChart(habits_chart);
+            }
+        }, 300);
         
         console.log('✅ Dashboard OK');
     } else {
@@ -494,6 +497,14 @@ function renderIncomeChart(data) {
                     easing: 'easeInOutQuart',
                     onComplete: () => hideChartSkeleton('incomeChart')
                 },
+                layout: {
+                    padding: {
+                        left: 10,
+                        right: 10,
+                        top: 10,
+                        bottom: 10
+                    }
+                },
                 plugins: { 
                     legend: { display: false },
                     tooltip: {
@@ -577,6 +588,14 @@ function renderHabitsChart(data) {
                     duration: 1200,
                     easing: 'easeOutBounce',
                     onComplete: () => hideChartSkeleton('habitsChart')
+                },
+                layout: {
+                    padding: {
+                        left: 10,
+                        right: 10,
+                        top: 10,
+                        bottom: 10
+                    }
                 },
                 plugins: { 
                     legend: { display: false },
@@ -814,7 +833,11 @@ async function showIncomeDetail(incomeId) {
             </button>
         `;
         
-        renderIncomeDetailChart(monthly_chart);
+        // حل مشکل بار اول
+        setTimeout(() => {
+            renderIncomeDetailChart(monthly_chart);
+        }, 300);
+        
         console.log('✅ Income detail loaded successfully');
     } else {
         console.error('❌ Income detail failed:', result.error);
@@ -877,6 +900,14 @@ function renderIncomeDetailChart(data) {
                     duration: 1500,
                     easing: 'easeInOutQuart',
                     onComplete: () => hideChartSkeleton('incomeDetailChart')
+                },
+                layout: {
+                    padding: {
+                        left: 10,
+                        right: 10,
+                        top: 10,
+                        bottom: 10
+                    }
                 },
                 plugins: { 
                     legend: { display: false },
@@ -1110,7 +1141,6 @@ window.addEventListener('load', function() {
     
     if (userId === ALLOWED_USER_ID) {
         initMaterialize();
-        loadDashboard();
         
         setTimeout(() => {
             const splash = document.getElementById('splash-screen');
@@ -1121,9 +1151,12 @@ window.addEventListener('load', function() {
                 setTimeout(() => {
                     splash.style.display = 'none';
                     if (app) app.style.display = 'block';
+                    // بارگذاری داشبورد بعد از نمایش صفحه
+                    loadDashboard();
                 }, 500);
             } else if (app) {
                 app.style.display = 'block';
+                loadDashboard();
             }
         }, 1000);
     }
