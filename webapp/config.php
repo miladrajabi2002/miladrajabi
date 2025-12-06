@@ -9,9 +9,9 @@ header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
 // اطلاعات دیتابیس (از فایل اصلی ربات)
-require '../includes/config.php';
-require '../includes/db.php';
-require '../includes/jdf.php';
+require __DIR__ . '/../includes/config.php';
+require __DIR__ . '/../includes/db.php';
+require __DIR__ . '/../includes/jdf.php';
 
 // تابع برای احراز هویت کاربر تلگرام
 function validateTelegramUser($initData) {
