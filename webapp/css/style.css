@@ -46,9 +46,9 @@ body.dark-mode {
     --border-color: #3C3C3C;
 }
 
-/* ─────────────────────────────────────────────────────────────── */
+/* ───────────────────────────────────────────────────────────────── */
 /* Base */
-/* ─────────────────────────────────────────────────────────────── */
+/* ───────────────────────────────────────────────────────────────── */
 * {
     margin: 0;
     padding: 0;
@@ -83,9 +83,9 @@ body {
     to { transform: rotate(360deg); }
 }
 
-/* ─────────────────────────────────────────────────────────────── */
+/* ───────────────────────────────────────────────────────────────── */
 /* Splash Screen */
-/* ─────────────────────────────────────────────────────────────── */
+/* ───────────────────────────────────────────────────────────────── */
 #splash-screen {
     position: fixed;
     top: 0;
@@ -127,9 +127,9 @@ body {
     background: rgba(255,255,255,0.2);
 }
 
-/* ─────────────────────────────────────────────────────────────── */
+/* ───────────────────────────────────────────────────────────────── */
 /* Header */
-/* ─────────────────────────────────────────────────────────────── */
+/* ───────────────────────────────────────────────────────────────── */
 .app-header nav {
     background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
     box-shadow: var(--shadow-md);
@@ -143,9 +143,9 @@ body {
     font-weight: 700 !important;
 }
 
-/* ─────────────────────────────────────────────────────────────── */
+/* ───────────────────────────────────────────────────────────────── */
 /* Main Content */
-/* ─────────────────────────────────────────────────────────────── */
+/* ───────────────────────────────────────────────────────────────── */
 .main-content {
     padding: 1rem 0;
     padding-bottom: 90px;
@@ -166,9 +166,9 @@ body {
     display: block;
 }
 
-/* ─────────────────────────────────────────────────────────────── */
+/* ───────────────────────────────────────────────────────────────── */
 /* Cards */
-/* ─────────────────────────────────────────────────────────────── */
+/* ───────────────────────────────────────────────────────────────── */
 .card {
     background: var(--bg-card);
     border-radius: var(--radius) !important;
@@ -223,9 +223,9 @@ body {
     color: white;
 }
 
-/* ─────────────────────────────────────────────────────────────── */
+/* ───────────────────────────────────────────────────────────────── */
 /* Stat Cards - Modern Design */
-/* ─────────────────────────────────────────────────────────────── */
+/* ───────────────────────────────────────────────────────────────── */
 .stat-card {
     padding: 1.5rem;
     border-radius: var(--radius);
@@ -314,9 +314,9 @@ body {
     opacity: 0.9;
 }
 
-/* ─────────────────────────────────────────────────────────────── */
+/* ───────────────────────────────────────────────────────────────── */
 /* Charts - Enhanced with Skeleton & Animations */
-/* ─────────────────────────────────────────────────────────────── */
+/* ───────────────────────────────────────────────────────────────── */
 .chart-container {
     position: relative;
     height: 220px;
@@ -381,9 +381,9 @@ body {
     }
 }
 
-/* ─────────────────────────────────────────────────────────────── */
+/* ───────────────────────────────────────────────────────────────── */
 /* Habits List */
-/* ─────────────────────────────────────────────────────────────── */
+/* ───────────────────────────────────────────────────────────────── */
 .habits-list {
     margin-top: 1rem;
 }
@@ -453,9 +453,9 @@ body {
     transition: width 0.3s ease;
 }
 
-/* ─────────────────────────────────────────────────────────────── */
+/* ───────────────────────────────────────────────────────────────── */
 /* Income Cards */
-/* ─────────────────────────────────────────────────────────────── */
+/* ───────────────────────────────────────────────────────────────── */
 .income-card {
     background: var(--bg-card);
     border-radius: var(--radius-sm);
@@ -505,9 +505,9 @@ body {
     color: var(--text-secondary);
 }
 
-/* ─────────────────────────────────────────────────────────────── */
+/* ───────────────────────────────────────────────────────────────── */
 /* Summary Items */
-/* ─────────────────────────────────────────────────────────────── */
+/* ───────────────────────────────────────────────────────────────── */
 .summary-item {
     display: flex;
     align-items: center;
@@ -521,9 +521,41 @@ body {
     font-size: 32px;
 }
 
-/* ─────────────────────────────────────────────────────────────── */
-/* Bottom Navigation */
-/* ─────────────────────────────────────────────────────────────── */
+/* ───────────────────────────────────────────────────────────────── */
+/* Bottom Navigation - Material Design Enhanced */
+/* ───────────────────────────────────────────────────────────────── */
+
+/* Ripple Effect Keyframes */
+@keyframes ripple {
+    0% {
+        transform: scale(0);
+        opacity: 0.6;
+    }
+    100% {
+        transform: scale(2.5);
+        opacity: 0;
+    }
+}
+
+/* Icon Pop Animation */
+@keyframes iconPop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+/* Label Slide Up */
+@keyframes labelSlide {
+    from { 
+        opacity: 0;
+        transform: translateY(5px);
+    }
+    to { 
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 .bottom-nav {
     position: fixed;
     bottom: 0;
@@ -532,50 +564,161 @@ body {
     background: var(--bg-secondary);
     display: flex;
     justify-content: space-around;
-    padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    padding: 6px 0 calc(6px + env(safe-area-inset-bottom));
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
     border-top: 1px solid var(--border-color);
     z-index: 1000;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 
 .nav-item {
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
-    padding: 6px 12px;
+    justify-content: center;
+    gap: 2px;
+    padding: 8px 16px;
     cursor: pointer;
-    transition: all 0.2s ease;
-    border-radius: var(--radius-sm);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 16px;
     color: var(--text-secondary);
-    min-width: 60px;
+    min-width: 64px;
+    overflow: hidden;
 }
 
+/* Ripple Effect Container */
+.nav-item::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: var(--primary);
+    transform: translate(-50%, -50%);
+    opacity: 0;
+}
+
+.nav-item:active::before {
+    width: 100%;
+    height: 100%;
+    opacity: 0.2;
+    transition: width 0.3s ease, height 0.3s ease, opacity 0.3s ease;
+}
+
+/* Icon Styling */
 .nav-item i {
     font-size: 24px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    z-index: 1;
 }
 
+/* Label Styling */
 .nav-item span {
     font-size: 0.7rem;
     font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0.8;
+    position: relative;
+    z-index: 1;
 }
 
+/* Active State */
 .nav-item.active {
     color: var(--primary);
+    background: rgba(25, 118, 210, 0.08);
 }
 
 .nav-item.active i {
     transform: scale(1.15);
+    animation: iconPop 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.nav-item.active span {
+    opacity: 1;
+    font-weight: 700;
+    animation: labelSlide 0.3s ease;
+}
+
+/* Hover Effect (for desktop) */
+@media (hover: hover) {
+    .nav-item:hover:not(.active) {
+        background: rgba(0, 0, 0, 0.04);
+        transform: translateY(-2px);
+    }
+    
+    .nav-item:hover:not(.active) i {
+        transform: scale(1.08);
+    }
+}
+
+/* Active Tap Effect */
 .nav-item:active {
     transform: scale(0.95);
 }
 
-/* ─────────────────────────────────────────────────────────────── */
+/* Active Indicator (Bottom Line) */
+.nav-item.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 32px;
+    height: 3px;
+    background: var(--primary);
+    border-radius: 2px 2px 0 0;
+    animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideIn {
+    from {
+        width: 0;
+        opacity: 0;
+    }
+    to {
+        width: 32px;
+        opacity: 1;
+    }
+}
+
+/* Badge Support */
+.nav-item .badge {
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    min-width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #F44336;
+    color: white;
+    border-radius: 9px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 0 5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    animation: pulse 2s ease infinite;
+}
+
+/* Dark Mode Support */
+body.dark-mode .bottom-nav {
+    background: rgba(30, 30, 30, 0.95);
+    border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .nav-item.active {
+    background: rgba(66, 165, 245, 0.15);
+}
+
+/* ───────────────────────────────────────────────────────────────── */
 /* Collection */
-/* ─────────────────────────────────────────────────────────────── */
+/* ───────────────────────────────────────────────────────────────── */
 .collection {
     border: none !important;
     border-radius: var(--radius-sm);
@@ -592,9 +735,9 @@ body {
     border-bottom: none !important;
 }
 
-/* ─────────────────────────────────────────────────────────────── */
+/* ───────────────────────────────────────────────────────────────── */
 /* Badge */
-/* ─────────────────────────────────────────────────────────────── */
+/* ───────────────────────────────────────────────────────────────── */
 .badge {
     padding: 0.25rem 0.75rem;
     border-radius: 12px;
@@ -602,9 +745,9 @@ body {
     font-weight: 600;
 }
 
-/* ─────────────────────────────────────────────────────────────── */
+/* ───────────────────────────────────────────────────────────────── */
 /* Responsive */
-/* ─────────────────────────────────────────────────────────────── */
+/* ───────────────────────────────────────────────────────────────── */
 @media (max-width: 600px) {
     .stat-value {
         font-size: 1.5rem;
@@ -613,11 +756,24 @@ body {
     .chart-container {
         height: 180px;
     }
+    
+    .nav-item {
+        padding: 6px 12px;
+        min-width: 56px;
+    }
+    
+    .nav-item i {
+        font-size: 22px;
+    }
+    
+    .nav-item span {
+        font-size: 0.65rem;
+    }
 }
 
-/* ─────────────────────────────────────────────────────────────── */
+/* ───────────────────────────────────────────────────────────────── */
 /* Utilities */
-/* ─────────────────────────────────────────────────────────────── */
+/* ───────────────────────────────────────────────────────────────── */
 .blue { background: var(--primary) !important; }
 .green { background: var(--success) !important; }
 .orange { background: var(--warning) !important; }
