@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════════
-// Telegram WebApp - Complete Fixed Version
+// Telegram WebApp - Production Ready
 // ════════════════════════════════════════════════════════════════
 
 const tg = window.Telegram?.WebApp || {};
@@ -146,10 +146,13 @@ async function apiCall(endpoint, data = {}) {
             body: JSON.stringify({ user_id: userId, ...data })
         });
         
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        if (!response.ok) {
+            console.error('❌ HTTP Error:', response.status, response.statusText);
+            return { success: false, error: `HTTP ${response.status}` };
+        }
         
         const result = await response.json();
-        console.log('✅', endpoint, '→', result.success ? 'OK' : 'FAIL');
+        console.log('✅', endpoint, '→', result.success ? 'OK' : 'FAIL', result.error || '');
         return result;
         
     } catch (error) {
@@ -245,9 +248,8 @@ async function loadDashboard() {
     const result = await apiCall('dashboard.php');
     
     if (result.success && result.data) {
-        const { stats, income_chart, habits_chart, recent_activities } = result.data;
+        const { stats, income_chart, habits_chart } = result.data;
         
-        // آمار اصلی
         const incomeEl = document.getElementById('stat-income');
         const remindersEl = document.getElementById('stat-reminders');
         const notesEl = document.getElementById('stat-notes');
@@ -256,7 +258,6 @@ async function loadDashboard() {
         if (remindersEl) remindersEl.textContent = stats.today_reminders || 0;
         if (notesEl) notesEl.textContent = stats.total_notes || 0;
         
-        // عادت‌های امروز
         const habitsBadge = document.getElementById('habits-badge');
         if (habitsEl) {
             if (stats.total_habits > 0) {
@@ -269,10 +270,8 @@ async function loadDashboard() {
             }
         }
         
-        // بارگذاری لیست عادت‌های امروز
         await loadTodayHabits();
         
-        // نمودارها
         if (income_chart && income_chart.length > 0) {
             renderIncomeChart(income_chart);
         }
@@ -284,7 +283,7 @@ async function loadDashboard() {
         console.log('✅ Dashboard OK');
     } else {
         if (habitsEl) habitsEl.textContent = 'خطا';
-        console.error('❌ Dashboard failed');
+        console.error('❌ Dashboard failed:', result.error);
     }
 }
 
@@ -354,13 +353,13 @@ function renderIncomeChart(data) {
             responsive: true,
             maintainAspectRatio: false,
             layout: {
-                padding: { left: 16, right: 16, top: 8, bottom: 8 }
+                padding: { left: 10, right: 10, top: 5, bottom: 5 }
             },
             plugins: { legend: { display: false } },
             scales: {
                 y: {
                     beginAtZero: true,
-                    ticks: { callback: v => v + ' میلیون' }
+                    ticks: { callback: v => v + ' م' }
                 }
             }
         }
@@ -388,7 +387,7 @@ function renderHabitsChart(data) {
             responsive: true,
             maintainAspectRatio: false,
             layout: {
-                padding: { left: 16, right: 16, top: 8, bottom: 8 }
+                padding: { left: 10, right: 10, top: 5, bottom: 5 }
             },
             plugins: { legend: { display: false } },
             scales: {
@@ -406,8 +405,6 @@ async function loadIncomes() {
     
     if (result.success && result.data) {
         const { incomes, stats } = result.data;
-        
-        console.log('📊 Stats:', stats);
         
         const totalEl = document.getElementById('income-total');
         const monthlyEl = document.getElementById('income-monthly');
@@ -474,6 +471,8 @@ async function loadIncomes() {
 // Income Detail
 // ────────────────────────────────────────────────────────────────
 async function showIncomeDetail(incomeId) {
+    console.log('🔍 Income Detail ID:', incomeId);
+    
     if (hapticEnabled && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
     
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -581,9 +580,21 @@ async function showIncomeDetail(incomeId) {
         `;
         
         renderIncomeDetailChart(monthly_chart);
-        console.log('✅ Income detail loaded');
+        console.log('✅ Income detail loaded successfully');
     } else {
-        if (container) container.innerHTML = '<div class="card"><div class="card-content center"><p class="red-text">خطا در بارگذاری جزئیات</p><button class="btn blue" onclick="showPage(\'incomes\')">بازگشت</button></div></div>';
+        console.error('❌ Income detail failed:', result.error);
+        if (container) {
+            container.innerHTML = `
+                <div class="card">
+                    <div class="card-content center">
+                        <i class="material-icons large red-text">error_outline</i>
+                        <p class="red-text">خطا در بارگذاری جزئیات</p>
+                        <p class="grey-text small">${result.error || 'لطفا دوباره تلاش کنید'}</p>
+                        <button class="btn blue" onclick="showPage('incomes')">بازگشت</button>
+                    </div>
+                </div>
+            `;
+        }
     }
 }
 
@@ -614,13 +625,13 @@ function renderIncomeDetailChart(data) {
             responsive: true,
             maintainAspectRatio: false,
             layout: {
-                padding: { left: 16, right: 16, top: 8, bottom: 8 }
+                padding: { left: 10, right: 10, top: 5, bottom: 5 }
             },
             plugins: { legend: { display: false } },
             scales: {
                 y: {
                     beginAtZero: true,
-                    ticks: { callback: v => v + ' میلیون' }
+                    ticks: { callback: v => v + ' م' }
                 }
             }
         }
@@ -636,7 +647,6 @@ async function loadHabits() {
     if (result.success && result.data) {
         const { habits } = result.data;
         
-        // به‌روزرسانی آمار بالای صفحه
         const completed = habits.filter(h => h.is_completed_today).length;
         const total = habits.length;
         const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
@@ -649,7 +659,6 @@ async function loadHabits() {
         if (completedEl) completedEl.textContent = completed;
         if (totalEl) totalEl.textContent = total;
         
-        // لیست عادت‌ها
         const container = document.getElementById('habits-list');
         if (!container) return;
         
