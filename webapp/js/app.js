@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════════
-// Telegram WebApp - Final Polished Version
+// Telegram WebApp - Complete Fixed Version
 // ════════════════════════════════════════════════════════════════
 
 const tg = window.Telegram?.WebApp || {};
@@ -88,12 +88,15 @@ function updateUserInfo() {
     const userIdEl = document.getElementById('user-id');
     if (userIdEl) userIdEl.textContent = userId || '-';
     
-    const avatarEl = document.getElementById('user-avatar');
-    if (avatarEl) {
-        const fallbackUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=6366f1&color=fff&size=128&bold=true`;
-        avatarEl.src = userPhoto || fallbackUrl;
-        avatarEl.onerror = () => avatarEl.src = fallbackUrl;
-    }
+    const avatarEls = document.querySelectorAll('#user-avatar, #user-avatar-settings');
+    const fallbackUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=6366f1&color=fff&size=128&bold=true`;
+    
+    avatarEls.forEach(el => {
+        if (el) {
+            el.src = userPhoto || fallbackUrl;
+            el.onerror = () => el.src = fallbackUrl;
+        }
+    });
 }
 
 function showAccessDenied() {
@@ -189,6 +192,8 @@ function showPage(pageName) {
     if (targetPage) targetPage.classList.add('active');
     
     document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+    const activeNav = document.querySelector(`.nav-item[data-page="${pageName}"]`);
+    if (activeNav) activeNav.classList.add('active');
     
     const titles = {
         dashboard: 'داشبورد',
@@ -242,6 +247,7 @@ async function loadDashboard() {
     if (result.success && result.data) {
         const { stats, income_chart, habits_chart, recent_activities } = result.data;
         
+        // آمار اصلی
         const incomeEl = document.getElementById('stat-income');
         const remindersEl = document.getElementById('stat-reminders');
         const notesEl = document.getElementById('stat-notes');
@@ -250,14 +256,23 @@ async function loadDashboard() {
         if (remindersEl) remindersEl.textContent = stats.today_reminders || 0;
         if (notesEl) notesEl.textContent = stats.total_notes || 0;
         
+        // عادت‌های امروز
+        const habitsBadge = document.getElementById('habits-badge');
         if (habitsEl) {
             if (stats.total_habits > 0) {
-                habitsEl.textContent = `${stats.completed_habits || 0}/${stats.total_habits}`;
+                const text = `${stats.completed_habits || 0}/${stats.total_habits}`;
+                habitsEl.textContent = text;
+                if (habitsBadge) habitsBadge.textContent = text;
             } else {
                 habitsEl.textContent = 'ندارید';
+                if (habitsBadge) habitsBadge.textContent = '0/0';
             }
         }
         
+        // بارگذاری لیست عادت‌های امروز
+        await loadTodayHabits();
+        
+        // نمودارها
         if (income_chart && income_chart.length > 0) {
             renderIncomeChart(income_chart);
         }
@@ -266,25 +281,49 @@ async function loadDashboard() {
             renderHabitsChart(habits_chart);
         }
         
-        const activitiesContainer = document.getElementById('recent-activities');
-        if (activitiesContainer) {
-            if (recent_activities && recent_activities.length > 0) {
-                activitiesContainer.innerHTML = recent_activities.map(act => `
-                    <li class="collection-item avatar">
-                        <i class="material-icons circle ${act.color}">${act.icon}</i>
-                        <span class="title">${act.title}</span>
-                        <p class="grey-text">${act.time}</p>
-                    </li>
-                `).join('');
-            } else {
-                activitiesContainer.innerHTML = '<li class="collection-item center grey-text">فعالیتی ثبت نشده</li>';
-            }
-        }
-        
         console.log('✅ Dashboard OK');
     } else {
         if (habitsEl) habitsEl.textContent = 'خطا';
         console.error('❌ Dashboard failed');
+    }
+}
+
+// ────────────────────────────────────────────────────────────────
+// Today Habits List
+// ────────────────────────────────────────────────────────────────
+async function loadTodayHabits() {
+    const container = document.getElementById('habits-today-list');
+    if (!container) return;
+    
+    const result = await apiCall('habits.php', { action: 'list' });
+    
+    if (result.success && result.data) {
+        const { habits } = result.data;
+        
+        if (habits.length === 0) {
+            container.innerHTML = '<p class="center grey-text small">عادتی ثبت نشده</p>';
+            return;
+        }
+        
+        container.innerHTML = habits.map(habit => `
+            <div class="habit-item" style="display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
+                <label style="flex: 1; margin: 0; cursor: pointer;">
+                    <input type="checkbox" class="filled-in" ${habit.is_completed_today ? 'checked' : ''} 
+                           onchange="toggleHabit(${habit.id})" />
+                    <span style="font-size: 0.95rem;">${habit.name}</span>
+                </label>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div class="progress" style="width: 60px; height: 6px; margin: 0;">
+                        <div class="determinate ${habit.status_color}" style="width: ${habit.success_rate}%"></div>
+                    </div>
+                    <span class="${habit.status_color}-text" style="font-size: 0.85rem; font-weight: 500; min-width: 35px; text-align: left;">${habit.success_rate}%</span>
+                </div>
+            </div>
+        `).join('');
+        
+        console.log('✅ Today habits loaded:', habits.length);
+    } else {
+        container.innerHTML = '<p class="center red-text small">خطا در بارگذاری</p>';
     }
 }
 
@@ -315,12 +354,7 @@ function renderIncomeChart(data) {
             responsive: true,
             maintainAspectRatio: false,
             layout: {
-                padding: {
-                    left: 16,
-                    right: 16,
-                    top: 8,
-                    bottom: 8
-                }
+                padding: { left: 16, right: 16, top: 8, bottom: 8 }
             },
             plugins: { legend: { display: false } },
             scales: {
@@ -354,12 +388,7 @@ function renderHabitsChart(data) {
             responsive: true,
             maintainAspectRatio: false,
             layout: {
-                padding: {
-                    left: 16,
-                    right: 16,
-                    top: 8,
-                    bottom: 8
-                }
+                padding: { left: 16, right: 16, top: 8, bottom: 8 }
             },
             plugins: { legend: { display: false } },
             scales: {
@@ -370,7 +399,7 @@ function renderHabitsChart(data) {
 }
 
 // ────────────────────────────────────────────────────────────────
-// Incomes - Material Design
+// Incomes
 // ────────────────────────────────────────────────────────────────
 async function loadIncomes() {
     const result = await apiCall('incomes.php');
@@ -380,25 +409,16 @@ async function loadIncomes() {
         
         console.log('📊 Stats:', stats);
         
-        // آمار بالای صفحه
         const totalEl = document.getElementById('income-total');
         const monthlyEl = document.getElementById('income-monthly');
+        const activeEl = document.getElementById('income-active');
         const inactiveEl = document.getElementById('income-inactive');
         
-        if (totalEl) {
-            totalEl.textContent = stats.total_active || 0;
-            console.log('✅ Total active set:', stats.total_active);
-        }
-        if (monthlyEl) {
-            monthlyEl.textContent = formatMoney(stats.monthly_total || 0);
-            console.log('✅ Monthly total set:', stats.monthly_total);
-        }
-        if (inactiveEl) {
-            inactiveEl.textContent = stats.total_inactive || 0;
-            console.log('✅ Inactive set:', stats.total_inactive);
-        }
+        if (totalEl) totalEl.textContent = stats.total_active || 0;
+        if (monthlyEl) monthlyEl.textContent = formatMoney(stats.monthly_total || 0);
+        if (activeEl) activeEl.textContent = stats.total_active || 0;
+        if (inactiveEl) inactiveEl.textContent = stats.total_inactive || 0;
         
-        // لیست درآمدها - Material Design
         const container = document.getElementById('incomes-list');
         if (!container) return;
         
@@ -594,12 +614,7 @@ function renderIncomeDetailChart(data) {
             responsive: true,
             maintainAspectRatio: false,
             layout: {
-                padding: {
-                    left: 16,
-                    right: 16,
-                    top: 8,
-                    bottom: 8
-                }
+                padding: { left: 16, right: 16, top: 8, bottom: 8 }
             },
             plugins: { legend: { display: false } },
             scales: {
@@ -620,6 +635,21 @@ async function loadHabits() {
     
     if (result.success && result.data) {
         const { habits } = result.data;
+        
+        // به‌روزرسانی آمار بالای صفحه
+        const completed = habits.filter(h => h.is_completed_today).length;
+        const total = habits.length;
+        const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
+        
+        const rateEl = document.getElementById('habits-success-rate');
+        const completedEl = document.getElementById('habits-completed-today');
+        const totalEl = document.getElementById('habits-total-today');
+        
+        if (rateEl) rateEl.textContent = rate + '%';
+        if (completedEl) completedEl.textContent = completed;
+        if (totalEl) totalEl.textContent = total;
+        
+        // لیست عادت‌ها
         const container = document.getElementById('habits-list');
         if (!container) return;
         

@@ -66,7 +66,7 @@
                         <div class="card-content">
                             <div class="row valign-wrapper mb-0">
                                 <div class="col s2">
-                                    <img src="" id="user-avatar-main" class="circle responsive-img" width="50">
+                                    <img src="" id="user-avatar" class="circle responsive-img" width="50">
                                 </div>
                                 <div class="col s7">
                                     <h6 class="mb-0">سلام <span id="welcome-user">کاربر</span>! 👋</h6>
@@ -95,8 +95,8 @@
                                 <div class="stat-icon-wrapper">
                                     <i class="material-icons">check_circle</i>
                                 </div>
-                                <h6 class="stat-value" id="stat-habits-rate">0%</h6>
-                                <p class="stat-label">نرخ موفقیت</p>
+                                <h6 class="stat-value" id="stat-habits">0/0</h6>
+                                <p class="stat-label">عادت‌های امروز</p>
                             </div>
                         </div>
                     </div>
@@ -166,7 +166,7 @@
                                     <div class="summary-item">
                                         <i class="material-icons orange-text">notifications_active</i>
                                         <div>
-                                            <p class="mb-0"><strong id="summary-reminders">0</strong></p>
+                                            <p class="mb-0"><strong id="stat-reminders">0</strong></p>
                                             <p class="grey-text small mb-0">یادآور امروز</p>
                                         </div>
                                     </div>
@@ -175,7 +175,7 @@
                                     <div class="summary-item">
                                         <i class="material-icons purple-text">note</i>
                                         <div>
-                                            <p class="mb-0"><strong id="summary-notes">0</strong></p>
+                                            <p class="mb-0"><strong id="stat-notes">0</strong></p>
                                             <p class="grey-text small mb-0">یادداشت</p>
                                         </div>
                                     </div>
@@ -194,8 +194,8 @@
                     <div class="card hoverable gradient-card">
                         <div class="card-content white-text">
                             <h6 class="mb-1">درآمد ماهانه</h6>
-                            <h4 class="mb-0" id="income-total-amount">0</h4>
-                            <p class="mb-0 opacity-80" id="income-sources-count">از 0 منبع</p>
+                            <h4 class="mb-0" id="income-monthly">0</h4>
+                            <p class="mb-0 opacity-80">از <span id="income-total">0</span> منبع</p>
                         </div>
                     </div>
                     
@@ -223,6 +223,13 @@
                     
                     <!-- Incomes List -->
                     <div id="incomes-list"></div>
+                </div>
+            </div>
+
+            <!-- Income Detail Page -->
+            <div id="income-detail-page" class="page">
+                <div class="container">
+                    <div id="income-detail-content"></div>
                 </div>
             </div>
 
@@ -264,7 +271,7 @@
                         <div class="card-content white-text">
                             <h6 class="mb-1">نرخ موفقیت امروز</h6>
                             <h3 class="mb-0" id="habits-success-rate">0%</h3>
-                            <p class="mb-0 opacity-80" id="habits-completed-today">0 از 0 عادت</p>
+                            <p class="mb-0 opacity-80"><span id="habits-completed-today">0</span> از <span id="habits-total-today">0</span> عادت</p>
                         </div>
                     </div>
                     
@@ -322,8 +329,8 @@
                     <div class="card hoverable">
                         <div class="card-content center">
                             <img src="" id="user-avatar-settings" class="circle responsive-img" width="80" style="margin: 0 auto;">
-                            <h6 class="mt-2" id="user-name-settings">کاربر</h6>
-                            <p class="grey-text" id="user-id-settings">ID: -</p>
+                            <h6 class="mt-2" id="user-name">کاربر</h6>
+                            <p class="grey-text">ID: <span id="user-id">-</span></p>
                         </div>
                     </div>
                 </div>
