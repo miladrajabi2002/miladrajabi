@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════════
-// Telegram WebApp - Production Ready
+// Telegram WebApp - Material Design
 // ════════════════════════════════════════════════════════════════
 
 const tg = window.Telegram?.WebApp || {};
@@ -352,9 +352,6 @@ function renderIncomeChart(data) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            layout: {
-                padding: { left: 10, right: 10, top: 5, bottom: 5 }
-            },
             plugins: { legend: { display: false } },
             scales: {
                 y: {
@@ -386,9 +383,6 @@ function renderHabitsChart(data) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            layout: {
-                padding: { left: 10, right: 10, top: 5, bottom: 5 }
-            },
             plugins: { legend: { display: false } },
             scales: {
                 y: { beginAtZero: true, ticks: { stepSize: 1 } }
@@ -398,7 +392,7 @@ function renderHabitsChart(data) {
 }
 
 // ────────────────────────────────────────────────────────────────
-// Incomes
+// Incomes - Simple Material Design
 // ────────────────────────────────────────────────────────────────
 async function loadIncomes() {
     const result = await apiCall('incomes.php');
@@ -424,41 +418,56 @@ async function loadIncomes() {
             return;
         }
         
+        // لیست ساده Material Design
         container.innerHTML = incomes.map(inc => `
-            <div class="card hoverable" style="margin-bottom: 12px; border-radius: 12px; cursor: pointer; overflow: hidden;" onclick="showIncomeDetail(${inc.id})">
+            <div class="card hoverable" 
+                 style="margin-bottom: 12px; cursor: pointer; transition: all 0.2s ease;" 
+                 onclick="showIncomeDetail(${inc.id})">
                 <div class="card-content" style="padding: 16px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                        <h6 style="margin: 0; font-weight: bold; font-size: 1.1rem;">${inc.client_name}</h6>
-                        <span class="new badge ${inc.is_active ? 'green' : 'grey'}" data-badge-caption="" style="border-radius: 12px; padding: 4px 10px; font-size: 0.7rem;">${inc.is_active ? 'فعال' : 'غیرفعال'}</span>
-                    </div>
                     
-                    <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 12px;">
-                        <i class="material-icons tiny grey-text" style="font-size: 16px;">business_center</i>
-                        <span class="grey-text" style="font-size: 0.9rem;">${inc.service_type}</span>
-                    </div>
-                    
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; color: white; margin-bottom: 8px;">
+                    <!-- Header -->
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
                         <div>
-                            <p style="margin: 0; font-size: 0.75rem; opacity: 0.9;">مبلغ ماهانه</p>
-                            <h6 style="margin: 4px 0 0 0; font-weight: bold;">${formatMoney(inc.monthly_amount)}</h6>
+                            <h6 style="margin: 0; font-size: 1.1rem; font-weight: 600;">${inc.client_name}</h6>
+                            <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: #757575;">
+                                <i class="material-icons" style="font-size: 14px; vertical-align: middle;">business_center</i>
+                                ${inc.service_type}
+                            </p>
                         </div>
-                        <div style="text-align: left;">
-                            <p style="margin: 0; font-size: 0.75rem; opacity: 0.9;">مدت فعالیت</p>
-                            <h6 style="margin: 4px 0 0 0; font-weight: bold;">${inc.months} ماه</h6>
+                        <span style="padding: 4px 12px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;
+                                     ${inc.is_active ? 'background: #E8F5E9; color: #2E7D32;' : 'background: #FFEBEE; color: #C62828;'}">
+                            ${inc.is_active ? 'فعال' : 'غیرفعال'}
+                        </span>
+                    </div>
+                    
+                    <!-- Info -->
+                    <div style="display: flex; justify-content: space-between; padding: 12px; 
+                                background: #F5F7FA; border-radius: 8px;">
+                        <div style="text-align: center; flex: 1;">
+                            <p style="margin: 0; font-size: 0.75rem; color: #757575;">مبلغ ماهانه</p>
+                            <h6 style="margin: 4px 0 0 0; font-size: 1rem; font-weight: 700; color: #1976D2;">
+                                ${formatMoney(inc.monthly_amount)}
+                            </h6>
+                        </div>
+                        <div style="width: 1px; background: #E0E0E0; margin: 0 12px;"></div>
+                        <div style="text-align: center; flex: 1;">
+                            <p style="margin: 0; font-size: 0.75rem; color: #757575;">مدت</p>
+                            <h6 style="margin: 4px 0 0 0; font-size: 1rem; font-weight: 700; color: #4CAF50;">
+                                ${inc.months} ماه
+                            </h6>
                         </div>
                     </div>
                     
                     ${inc.days_until_payment ? `
-                        <div style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px; background: #fff3e0; border-radius: 8px;">
-                            <i class="material-icons orange-text" style="font-size: 18px;">schedule</i>
-                            <span class="orange-text" style="font-size: 0.85rem; font-weight: 500;">${inc.days_until_payment} روز تا پرداخت بعدی</span>
+                        <div style="margin-top: 8px; padding: 8px; background: #FFF3E0; border-radius: 6px; 
+                                    display: flex; align-items: center; justify-content: center; gap: 6px;">
+                            <i class="material-icons" style="font-size: 16px; color: #F57C00;">alarm</i>
+                            <span style="font-size: 0.85rem; color: #F57C00; font-weight: 500;">
+                                ${inc.days_until_payment} روز تا پرداخت
+                            </span>
                         </div>
                     ` : ''}
-                </div>
-                
-                <div style="background: #f5f5f5; padding: 10px 16px; display: flex; justify-content: center; align-items: center; gap: 6px;">
-                    <i class="material-icons grey-text" style="font-size: 18px;">info</i>
-                    <span class="grey-text" style="font-size: 0.85rem;">کلیک برای جزئیات</span>
+                    
                 </div>
             </div>
         `).join('');
@@ -493,7 +502,7 @@ async function showIncomeDetail(incomeId) {
         if (!container) return;
         
         container.innerHTML = `
-            <div class="card" style="border-radius: 12px;">
+            <div class="card">
                 <div class="card-content">
                     <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
                         <div>
@@ -505,7 +514,7 @@ async function showIncomeDetail(incomeId) {
                                 </a>
                             ` : ''}
                         </div>
-                        <span class="badge ${income.is_active ? 'green' : 'grey'} white-text" style="border-radius: 12px; padding: 6px 14px;">${income.is_active ? 'فعال' : 'غیرفعال'}</span>
+                        <span class="badge ${income.is_active ? 'green' : 'grey'} white-text">${income.is_active ? 'فعال' : 'غیرفعال'}</span>
                     </div>
                     
                     <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 20px;">
@@ -564,7 +573,7 @@ async function showIncomeDetail(incomeId) {
                 </div>
             </div>
             
-            <div class="card" style="margin-top: 16px; border-radius: 12px;">
+            <div class="card" style="margin-top: 16px;">
                 <div class="card-content">
                     <h6>نمودار درآمد ۱۲ ماه اخیر</h6>
                     <div style="height: 250px; margin-top: 16px;">
@@ -573,7 +582,7 @@ async function showIncomeDetail(incomeId) {
                 </div>
             </div>
             
-            <button class="btn waves-effect waves-light blue" onclick="showPage('incomes')" style="width: 100%; margin-top: 16px; border-radius: 8px;">
+            <button class="btn waves-effect waves-light blue" onclick="showPage('incomes')" style="width: 100%; margin-top: 16px;">
                 <i class="material-icons left">arrow_forward</i>
                 بازگشت به لیست
             </button>
@@ -624,9 +633,6 @@ function renderIncomeDetailChart(data) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            layout: {
-                padding: { left: 10, right: 10, top: 5, bottom: 5 }
-            },
             plugins: { legend: { display: false } },
             scales: {
                 y: {
