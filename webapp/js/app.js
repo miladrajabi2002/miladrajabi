@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════
-// Telegram WebApp - Complete Fixed Version
+// Telegram WebApp - Final Fixed Version
 // ══════════════════════════════════════════════════════════════
 
 const tg = window.Telegram?.WebApp || {};
@@ -7,12 +7,45 @@ const API_URL = './api/';
 const ALLOWED_USER_ID = 1253939828;
 
 let userId = null;
-let userName = 'میلاد'; // اسم پیش‌فرض
+let userName = 'میلاد';
 let userPhoto = null;
 let hapticEnabled = true;
 let incomeChart = null;
 let habitsChart = null;
 let incomeDetailChart = null;
+
+// ────────────────────────────────────────────────────────────────
+// Jalaali Date
+// ────────────────────────────────────────────────────────────────
+function getJalaaliDate() {
+    const now = new Date();
+    const days = ['یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنج‌شنبه', 'جمعه', 'شنبه'];
+    const months = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'];
+    
+    // تقریب ساده تاریخ جلالی (برای نمایش)
+    const dayName = days[now.getDay()];
+    const gYear = now.getFullYear();
+    const gMonth = now.getMonth() + 1;
+    const gDay = now.getDate();
+    
+    // تبدیل تقریبی میلادی به شمسی
+    const jYear = gYear - 621;
+    let jMonth = gMonth - 3;
+    let jDay = gDay;
+    
+    if (jMonth <= 0) {
+        jMonth += 12;
+    }
+    
+    const persianDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+    function toPersian(n) {
+        return String(n).split('').map(c => 
+            c >= '0' && c <= '9' ? persianDigits[parseInt(c)] : c
+        ).join('');
+    }
+    
+    return `${dayName}، ${toPersian(jDay)} ${months[jMonth - 1]} ${toPersian(jYear)}`;
+}
 
 // ────────────────────────────────────────────────────────────────
 // Initialize
@@ -38,7 +71,6 @@ function initTelegramWebApp() {
         console.log('⚠️ Testing mode');
     }
     
-    // Update UI
     updateUserInfo();
     
     if (tg.colorScheme === 'dark') {
@@ -46,7 +78,7 @@ function initTelegramWebApp() {
     }
     
     updateDateTime();
-    setInterval(updateDateTime, 60000);
+    setInterval(updateDateTime, 10000); // هر 10 ثانیه
 }
 
 function updateUserInfo() {
@@ -58,7 +90,7 @@ function updateUserInfo() {
     
     // User ID در تنظیمات
     const userIdEl = document.getElementById('user-id');
-    if (userIdEl) userIdEl.textContent = userId;
+    if (userIdEl) userIdEl.textContent = userId || '-';
     
     // عکس پروفایل
     const avatarEl = document.getElementById('user-avatar');
@@ -87,13 +119,8 @@ function showAccessDenied() {
 }
 
 function updateDateTime() {
-    const now = new Date();
-    const days = ['یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنج‌شنبه', 'جمعه', 'شنبه'];
-    const dayName = days[now.getDay()];
-    const time = now.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
-    
     const el = document.getElementById('current-date-time');
-    if (el) el.textContent = `${dayName}، ${time}`;
+    if (el) el.textContent = getJalaaliDate();
 }
 
 function initMaterialize() {
@@ -211,6 +238,11 @@ function loadPageData(pageName) {
 // ────────────────────────────────────────────────────────────────
 async function loadDashboard() {
     console.log('📊 Loading dashboard...');
+    
+    // نمایش loading
+    const habitsEl = document.getElementById('stat-habits');
+    if (habitsEl) habitsEl.textContent = '...';
+    
     const result = await apiCall('dashboard.php');
     
     if (result.success && result.data) {
@@ -219,11 +251,13 @@ async function loadDashboard() {
         // آمار اصلی
         const incomeEl = document.getElementById('stat-income');
         const remindersEl = document.getElementById('stat-reminders');
-        const habitsEl = document.getElementById('stat-habits');
         const notesEl = document.getElementById('stat-notes');
         
         if (incomeEl) incomeEl.textContent = formatMoney(stats.monthly_income);
         if (remindersEl) remindersEl.textContent = stats.today_reminders || 0;
+        if (notesEl) notesEl.textContent = stats.total_notes || 0;
+        
+        // عادت‌های امروز
         if (habitsEl) {
             if (stats.total_habits > 0) {
                 habitsEl.textContent = `${stats.completed_habits || 0}/${stats.total_habits}`;
@@ -231,14 +265,12 @@ async function loadDashboard() {
                 habitsEl.textContent = 'ندارید';
             }
         }
-        if (notesEl) notesEl.textContent = stats.total_notes || 0;
         
-        // نمودار درآمد
+        // نمودارها
         if (income_chart && income_chart.length > 0) {
             renderIncomeChart(income_chart);
         }
         
-        // نمودار عادت‌ها
         if (habits_chart && habits_chart.length > 0) {
             renderHabitsChart(habits_chart);
         }
@@ -260,6 +292,9 @@ async function loadDashboard() {
         }
         
         console.log('✅ Dashboard OK');
+    } else {
+        if (habitsEl) habitsEl.textContent = 'خطا';
+        console.error('❌ Dashboard failed');
     }
 }
 
@@ -337,7 +372,6 @@ async function loadIncomes() {
     if (result.success && result.data) {
         const { incomes, stats } = result.data;
         
-        // آمار بالای صفحه
         const totalEl = document.getElementById('income-total');
         const monthlyEl = document.getElementById('income-monthly');
         const inactiveEl = document.getElementById('income-inactive');
@@ -346,7 +380,6 @@ async function loadIncomes() {
         if (monthlyEl) monthlyEl.textContent = formatMoney(stats.monthly_total || 0);
         if (inactiveEl) inactiveEl.textContent = stats.total_inactive || 0;
         
-        // لیست درآمدها
         const container = document.getElementById('incomes-list');
         if (!container) return;
         
@@ -411,7 +444,6 @@ async function loadIncomes() {
 async function showIncomeDetail(incomeId) {
     if (hapticEnabled && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
     
-    // نمایش صفحه جزئیات
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     const detailPage = document.getElementById('income-detail-page');
     if (detailPage) detailPage.classList.add('active');
@@ -419,13 +451,14 @@ async function showIncomeDetail(incomeId) {
     const titleEl = document.getElementById('page-title');
     if (titleEl) titleEl.textContent = 'جزئیات درآمد';
     
-    // بارگذاری دیتا
+    const container = document.getElementById('income-detail-content');
+    if (container) container.innerHTML = '<div class="center"><div class="preloader-wrapper active"><div class="spinner-layer spinner-blue-only"><div class="circle-clipper left"><div class="circle"></div></div><div class="gap-patch"><div class="circle"></div></div><div class="circle-clipper right"><div class="circle"></div></div></div></div></div>';
+    
     const result = await apiCall('income_details.php', { income_id: incomeId });
     
     if (result.success && result.data) {
         const { income, stats, monthly_chart } = result.data;
         
-        const container = document.getElementById('income-detail-content');
         if (!container) return;
         
         container.innerHTML = `
@@ -509,10 +542,10 @@ async function showIncomeDetail(incomeId) {
             </button>
         `;
         
-        // رسم نمودار
         renderIncomeDetailChart(monthly_chart);
-        
         console.log('✅ Income detail loaded');
+    } else {
+        if (container) container.innerHTML = '<div class="card"><div class="card-content center"><p class="red-text">خطا در بارگذاری جزئیات</p><button class="btn blue" onclick="showPage(\'incomes\')">بازگشت</button></div></div>';
     }
 }
 
@@ -607,7 +640,7 @@ async function toggleHabit(habitId) {
 }
 
 // ────────────────────────────────────────────────────────────────
-// Reminders & Notes
+// Other Pages
 // ────────────────────────────────────────────────────────────────
 async function loadReminders() {
     const result = await apiCall('reminders.php');
@@ -658,7 +691,7 @@ async function loadNotes() {
 }
 
 // ────────────────────────────────────────────────────────────────
-// Dark Mode
+// Settings
 // ────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
     const darkToggle = document.getElementById('dark-mode-toggle');
@@ -703,7 +736,7 @@ window.addEventListener('load', function() {
             } else if (app) {
                 app.style.display = 'block';
             }
-        }, 1500);
+        }, 1000); // کاهش زمان splash
     }
 });
 
