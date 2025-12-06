@@ -79,42 +79,53 @@
                         </div>
                     </div>
 
-                    <!-- Quick Stats Grid - 4 Cards -->
-                    <div class="row">
-                        <div class="col s6">
-                            <div class="stat-card blue-card hoverable">
-                                <div class="stat-icon-wrapper">
-                                    <i class="material-icons">account_balance_wallet</i>
-                                </div>
-                                <h6 class="stat-value" id="stat-income">0</h6>
-                                <p class="stat-label">درآمد ماه</p>
+                    <!-- Stats Cards -->
+                    <div class="stats-container">
+                        <!-- Income Card -->
+                        <div class="stat-card hoverable">
+                            <div class="stat-border blue"></div>
+                            <div class="stat-icon-wrapper blue-light">
+                                <i class="material-icons blue-text">account_balance_wallet</i>
+                            </div>
+                            <div class="stat-info">
+                                <h5 class="stat-value" id="stat-income">0</h5>
+                                <p class="stat-label">درآمد ماهانه</p>
                             </div>
                         </div>
-                        <div class="col s6">
-                            <div class="stat-card green-card hoverable">
-                                <div class="stat-icon-wrapper">
-                                    <i class="material-icons">check_circle</i>
-                                </div>
-                                <h6 class="stat-value" id="stat-habits">0/0</h6>
+                        
+                        <!-- Habits Card -->
+                        <div class="stat-card hoverable">
+                            <div class="stat-border green"></div>
+                            <div class="stat-icon-wrapper green-light">
+                                <i class="material-icons green-text">check_circle</i>
+                            </div>
+                            <div class="stat-info">
+                                <h5 class="stat-value" id="stat-habits">0/0</h5>
                                 <p class="stat-label">عادت‌های امروز</p>
                             </div>
                         </div>
-                        <div class="col s6">
-                            <div class="stat-card purple-card hoverable">
-                                <div class="stat-icon-wrapper">
-                                    <i class="material-icons">description</i>
-                                </div>
-                                <h6 class="stat-value" id="stat-documents">0</h6>
+                        
+                        <!-- Documents Card -->
+                        <div class="stat-card hoverable">
+                            <div class="stat-border purple"></div>
+                            <div class="stat-icon-wrapper purple-light">
+                                <i class="material-icons purple-text">description</i>
+                            </div>
+                            <div class="stat-info">
+                                <h5 class="stat-value" id="stat-documents">0</h5>
                                 <p class="stat-label">اسناد</p>
                             </div>
                         </div>
-                        <div class="col s6">
-                            <div class="stat-card orange-card hoverable">
-                                <div class="stat-icon-wrapper">
-                                    <i class="material-icons">emoji_events</i>
-                                </div>
-                                <h6 class="stat-value" id="stat-goals">0/0</h6>
-                                <p class="stat-label">هدف‌های فعال</p>
+                        
+                        <!-- Goals Card -->
+                        <div class="stat-card hoverable">
+                            <div class="stat-border orange"></div>
+                            <div class="stat-icon-wrapper orange-light">
+                                <i class="material-icons orange-text">emoji_events</i>
+                            </div>
+                            <div class="stat-info">
+                                <h5 class="stat-value" id="stat-goals">0/0</h5>
+                                <p class="stat-label">هدف‌ها</p>
                             </div>
                         </div>
                     </div>
@@ -253,7 +264,7 @@
                 </div>
             </div>
 
-            <!-- Goals Page - Enhanced -->
+            <!-- Goals Page -->
             <div id="goals-page" class="page">
                 <div class="container">
                     <!-- Stats Card -->
@@ -372,7 +383,7 @@
 
         </main>
 
-        <!-- Bottom Navigation - Updated Order -->
+        <!-- Bottom Navigation -->
         <div class="bottom-nav">
             <div class="nav-item" onclick="showPage('habits')" data-page="habits">
                 <i class="material-icons">track_changes</i>
