@@ -323,10 +323,6 @@ body {
     height: auto !important;
 }
 
-.chart-container:hover {
-    transform: translateY(-2px);
-}
-
 /* Skeleton Shimmer Animation */
 @keyframes shimmer {
     0% { background-position: -200% 0; }
