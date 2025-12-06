@@ -1,9 +1,10 @@
 // ═══════════════════════════════════════════════════════════════
-// Telegram WebApp - Enhanced Version
+// Telegram WebApp - Secured Version
 // ═══════════════════════════════════════════════════════════════
 
 const tg = window.Telegram.WebApp;
 const API_URL = './api/';
+const ALLOWED_USER_ID = 1253939828; // ✅ فقط این کاربر دسترسی دارد
 
 let userId = null;
 let hapticEnabled = true;
@@ -18,31 +19,62 @@ function initTelegramWebApp() {
     tg.ready();
     tg.expand();
     
+    // Get user data
+    const user = tg.initDataUnsafe?.user;
+    if (user) {
+        userId = user.id;
+        
+        // ✅ چک کردن user_id
+        if (userId !== ALLOWED_USER_ID) {
+            showAccessDenied();
+            return;
+        }
+        
+        const userName = user.first_name || 'کاربر';
+        
+        const userNameEl = document.getElementById('user-name');
+        const welcomeUserEl = document.getElementById('welcome-user');
+        const avatarEl = document.getElementById('user-avatar');
+        
+        if (userNameEl) userNameEl.textContent = userName;
+        if (welcomeUserEl) welcomeUserEl.textContent = userName;
+        
+        if (avatarEl) {
+            const avatarUrl = user.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=6366f1&color=fff&size=128`;
+            avatarEl.src = avatarUrl;
+        }
+        
+        console.log('✅ User authorized:', userId);
+    } else {
+        // Testing mode
+        userId = ALLOWED_USER_ID;
+        console.log('⚠️ Testing mode - using allowed user ID');
+    }
+    
+    // Dark mode
     if (tg.colorScheme === 'dark') {
         document.body.classList.add('dark-mode');
         const toggle = document.getElementById('dark-mode-toggle');
         if (toggle) toggle.checked = true;
     }
     
-    const user = tg.initDataUnsafe?.user;
-    if (user) {
-        userId = user.id;
-        const userName = user.first_name || 'کاربر';
-        
-        document.getElementById('user-name').textContent = userName;
-        document.getElementById('welcome-user').textContent = userName;
-        
-        const avatarUrl = user.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=6366f1&color=fff&size=128`;
-        document.getElementById('user-avatar').src = avatarUrl;
-        
-        console.log('✅ User loaded:', userId);
-    } else {
-        userId = 123456;
-        console.log('⚠️ Testing mode');
-    }
-    
     updateDateTime();
     setInterval(updateDateTime, 60000);
+}
+
+function showAccessDenied() {
+    document.getElementById('splash-screen').style.display = 'none';
+    document.getElementById('app').innerHTML = `
+        <div style="display: flex; align-items: center; justify-content: center; height: 100vh; text-align: center; padding: 20px;">
+            <div>
+                <i class="material-icons" style="font-size: 80px; color: #ef4444;">lock</i>
+                <h4>دسترسی محدود</h4>
+                <p class="grey-text">شما مجاز به استفاده از این وب‌اپ نیستید.</p>
+                <p class="grey-text">User ID: ${userId}</p>
+            </div>
+        </div>
+    `;
+    document.getElementById('app').style.display = 'block';
 }
 
 function updateDateTime() {
@@ -115,10 +147,11 @@ function formatMoney(amount) {
 // ───────────────────────────────────────────────────────────────
 function showPage(pageName) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById(pageName + '-page').classList.add('active');
+    const targetPage = document.getElementById(pageName + '-page');
+    if (targetPage) targetPage.classList.add('active');
     
     document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-    event.currentTarget.classList.add('active');
+    if (event && event.currentTarget) event.currentTarget.classList.add('active');
     
     const titles = {
         dashboard: 'داشبورد',
@@ -129,12 +162,18 @@ function showPage(pageName) {
         habits: 'عادت‌ها',
         settings: 'تنظیمات'
     };
-    document.getElementById('page-title').textContent = titles[pageName];
     
-    M.Sidenav.getInstance(document.querySelector('.sidenav'))?.close();
+    const titleEl = document.getElementById('page-title');
+    if (titleEl) titleEl.textContent = titles[pageName] || 'داشبورد';
+    
+    const sidenav = M.Sidenav.getInstance(document.querySelector('.sidenav'));
+    if (sidenav) sidenav.close();
+    
     loadPageData(pageName);
     
-    if (hapticEnabled) tg.HapticFeedback.impactOccurred('light');
+    if (hapticEnabled && tg.HapticFeedback) {
+        tg.HapticFeedback.impactOccurred('light');
+    }
 }
 
 function loadPageData(pageName) {
@@ -202,15 +241,23 @@ function loadDemoDashboard() {
 }
 
 function updateDashboardStats(stats) {
-    document.getElementById('stat-income').textContent = formatMoney(stats.monthly_income);
-    document.getElementById('stat-reminders').textContent = stats.today_reminders;
-    document.getElementById('stat-habits').textContent = `${stats.completed_habits}/${stats.total_habits}`;
-    document.getElementById('stat-notes').textContent = stats.total_notes;
+    const incomeEl = document.getElementById('stat-income');
+    const remindersEl = document.getElementById('stat-reminders');
+    const habitsEl = document.getElementById('stat-habits');
+    const notesEl = document.getElementById('stat-notes');
+    
+    if (incomeEl) incomeEl.textContent = formatMoney(stats.monthly_income);
+    if (remindersEl) remindersEl.textContent = stats.today_reminders || 0;
+    if (habitsEl) habitsEl.textContent = `${stats.completed_habits || 0}/${stats.total_habits || 0}`;
+    if (notesEl) notesEl.textContent = stats.total_notes || 0;
 }
 
 function renderIncomeChart(data) {
     const ctx = document.getElementById('incomeChart');
-    if (!ctx) return;
+    if (!ctx) {
+        console.warn('⚠️ incomeChart element not found');
+        return;
+    }
     
     if (incomeChart) incomeChart.destroy();
     
@@ -224,7 +271,8 @@ function renderIncomeChart(data) {
                 borderColor: '#6366f1',
                 backgroundColor: 'rgba(99, 102, 241, 0.1)',
                 tension: 0.4,
-                fill: true
+                fill: true,
+                borderWidth: 3
             }]
         },
         options: {
@@ -243,7 +291,10 @@ function renderIncomeChart(data) {
 
 function renderHabitsChart(data) {
     const ctx = document.getElementById('habitsChart');
-    if (!ctx) return;
+    if (!ctx) {
+        console.warn('⚠️ habitsChart element not found');
+        return;
+    }
     
     if (habitsChart) habitsChart.destroy();
     
@@ -254,7 +305,8 @@ function renderHabitsChart(data) {
             datasets: [{
                 label: 'عادت',
                 data: data.map(d => d.count),
-                backgroundColor: '#10b981'
+                backgroundColor: '#10b981',
+                borderRadius: 6
             }]
         },
         options: {
@@ -270,7 +322,10 @@ function renderHabitsChart(data) {
 
 function renderActivities(activities) {
     const container = document.getElementById('recent-activities');
-    if (!container) return;
+    if (!container) {
+        console.warn('⚠️ recent-activities element not found');
+        return;
+    }
     
     if (!activities || activities.length === 0) {
         container.innerHTML = '<li class="collection-item center grey-text">فعالیتی ثبت نشده</li>';
@@ -296,11 +351,16 @@ async function loadIncomes() {
         const { incomes, stats } = result.data;
         
         // آمار بالای صفحه
-        document.getElementById('income-total').textContent = stats.total_active;
-        document.getElementById('income-monthly').textContent = formatMoney(stats.monthly_total);
-        document.getElementById('income-inactive').textContent = stats.total_inactive;
+        const totalEl = document.getElementById('income-total');
+        const monthlyEl = document.getElementById('income-monthly');
+        const inactiveEl = document.getElementById('income-inactive');
+        
+        if (totalEl) totalEl.textContent = stats.total_active || 0;
+        if (monthlyEl) monthlyEl.textContent = formatMoney(stats.monthly_total || 0);
+        if (inactiveEl) inactiveEl.textContent = stats.total_inactive || 0;
         
         const container = document.getElementById('incomes-list');
+        if (!container) return;
         
         if (incomes.length === 0) {
             container.innerHTML = '<p class="center grey-text">درآمدی ثبت نشده</p>';
@@ -308,7 +368,7 @@ async function loadIncomes() {
         }
         
         container.innerHTML = '<ul class="collection">' + incomes.map(inc => `
-            <li class="collection-item" onclick="showIncomeDetail(${inc.id})" style="cursor: pointer;">
+            <li class="collection-item hoverable" onclick="showIncomeDetail(${inc.id})" style="cursor: pointer;">
                 <div>
                     <span class="title">${inc.client_name}</span>
                     ${inc.client_username ? `<a href="https://t.me/${inc.client_username.replace('@', '')}" target="_blank" class="grey-text" onclick="event.stopPropagation()"> @${inc.client_username.replace('@', '')}</a>` : ''}
@@ -319,21 +379,24 @@ async function loadIncomes() {
                 </div>
                 <span class="secondary-content">
                     <span class="badge ${inc.is_active ? 'green' : 'grey'} white-text">${inc.is_active ? 'فعال' : 'غیرفعال'}</span><br>
-                    <i class="material-icons grey-text">chevron_left</i>
+                    <i class="material-icons grey-text" style="margin-top: 8px;">chevron_left</i>
                 </span>
             </li>
         `).join('') + '</ul>';
     } else {
-        document.getElementById('incomes-list').innerHTML = '<p class="center orange-text">⚠️ اتصال به API برقرار نیست</p>';
+        const container = document.getElementById('incomes-list');
+        if (container) container.innerHTML = '<p class="center orange-text">⚠️ اتصال به API برقرار نیست</p>';
     }
 }
 
 // نمایش جزئیات درآمد
 async function showIncomeDetail(incomeId) {
-    if (hapticEnabled) tg.HapticFeedback.impactOccurred('medium');
+    if (hapticEnabled && tg.HapticFeedback) {
+        tg.HapticFeedback.impactOccurred('medium');
+    }
     
+    M.toast({ html: `بارگذاری جزئیات درآمد #${incomeId}...`, classes: 'blue rounded' });
     // TODO: ساخت صفحه جزئیات (در مرحله بعد)
-    M.toast({ html: `جزئیات درآمد #${incomeId}`, classes: 'blue rounded' });
 }
 
 // ───────────────────────────────────────────────────────────────
@@ -345,6 +408,7 @@ async function loadHabits() {
     if (result.success && result.data) {
         const { habits } = result.data;
         const container = document.getElementById('habits-list');
+        if (!container) return;
         
         if (habits.length === 0) {
             container.innerHTML = '<p class="center grey-text">عادتی ثبت نشده</p>';
@@ -370,12 +434,15 @@ async function loadHabits() {
             </li>
         `).join('') + '</ul>';
     } else {
-        document.getElementById('habits-list').innerHTML = '<p class="center orange-text">⚠️ اتصال به API برقرار نیست</p>';
+        const container = document.getElementById('habits-list');
+        if (container) container.innerHTML = '<p class="center orange-text">⚠️ اتصال به API برقرار نیست</p>';
     }
 }
 
 async function toggleHabit(habitId, checked) {
-    if (hapticEnabled) tg.HapticFeedback.impactOccurred('medium');
+    if (hapticEnabled && tg.HapticFeedback) {
+        tg.HapticFeedback.impactOccurred('medium');
+    }
     
     const result = await apiCall('habits.php', { action: 'toggle', habit_id: habitId });
     
@@ -392,14 +459,46 @@ async function toggleHabit(habitId, checked) {
 async function loadReminders() {
     const result = await apiCall('reminders.php');
     if (result.success && result.data) {
-        // Render reminders...
+        const { reminders } = result.data;
+        const container = document.getElementById('reminders-list');
+        if (!container) return;
+        
+        if (reminders.length === 0) {
+            container.innerHTML = '<p class="center grey-text">یادآوری برای امروز ندارید</p>';
+            return;
+        }
+        
+        container.innerHTML = '<ul class="collection">' + reminders.map(rem => `
+            <li class="collection-item avatar">
+                <i class="material-icons circle ${rem.is_past ? 'grey' : 'orange'}">notifications</i>
+                <span class="title">${rem.title}</span>
+                <p>${rem.description || ''}</p>
+                <p class="grey-text">ساعت: ${rem.time_fa}</p>
+            </li>
+        `).join('') + '</ul>';
     }
 }
 
 async function loadNotes() {
     const result = await apiCall('notes.php');
     if (result.success && result.data) {
-        // Render notes...
+        const { notes } = result.data;
+        const container = document.getElementById('notes-list');
+        if (!container) return;
+        
+        if (notes.length === 0) {
+            container.innerHTML = '<p class="center grey-text">یادداشتی ندارید</p>';
+            return;
+        }
+        
+        container.innerHTML = notes.map(note => `
+            <div class="card hoverable">
+                <div class="card-content">
+                    <p>${note.preview}</p>
+                    <p class="grey-text" style="font-size: 0.8rem; margin-top: 8px;">${note.created_at_fa}</p>
+                </div>
+            </div>
+        `).join('');
     }
 }
 
@@ -408,10 +507,20 @@ async function loadNotes() {
 // ───────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
     const darkToggle = document.getElementById('dark-mode-toggle');
+    const hapticToggle = document.getElementById('haptic-toggle');
+    
     if (darkToggle) {
         darkToggle.addEventListener('change', function() {
             document.body.classList.toggle('dark-mode');
-            if (hapticEnabled) tg.HapticFeedback.impactOccurred('medium');
+            if (hapticEnabled && tg.HapticFeedback) {
+                tg.HapticFeedback.impactOccurred('medium');
+            }
+        });
+    }
+    
+    if (hapticToggle) {
+        hapticToggle.addEventListener('change', function() {
+            hapticEnabled = this.checked;
         });
     }
 });
@@ -422,18 +531,26 @@ document.addEventListener('DOMContentLoaded', function() {
 window.addEventListener('load', function() {
     console.log('🚀 App starting...');
     console.log('📍 API URL:', API_URL);
+    console.log('🔒 Allowed User ID:', ALLOWED_USER_ID);
     
     initTelegramWebApp();
-    initMaterialize();
-    loadDashboard();
     
-    setTimeout(() => {
-        document.getElementById('splash-screen').style.opacity = '0';
+    // فقط اگر کاربر مجاز بود، ادامه بده
+    if (userId === ALLOWED_USER_ID) {
+        initMaterialize();
+        loadDashboard();
+        
         setTimeout(() => {
-            document.getElementById('splash-screen').style.display = 'none';
-            document.getElementById('app').style.display = 'block';
-        }, 500);
-    }, 2000);
+            const splash = document.getElementById('splash-screen');
+            const app = document.getElementById('app');
+            
+            if (splash) splash.style.opacity = '0';
+            setTimeout(() => {
+                if (splash) splash.style.display = 'none';
+                if (app) app.style.display = 'block';
+            }, 500);
+        }, 2000);
+    }
 });
 
 window.showPage = showPage;
