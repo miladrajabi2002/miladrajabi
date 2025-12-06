@@ -1,6 +1,6 @@
-// ══════════════════════════════════════════════════════════════
-// Telegram WebApp - Final Fixed Version
-// ══════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════
+// Telegram WebApp - Final Polished Version
+// ════════════════════════════════════════════════════════════════
 
 const tg = window.Telegram?.WebApp || {};
 const API_URL = './api/';
@@ -22,13 +22,11 @@ function getJalaaliDate() {
     const days = ['یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنج‌شنبه', 'جمعه', 'شنبه'];
     const months = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'];
     
-    // تقریب ساده تاریخ جلالی (برای نمایش)
     const dayName = days[now.getDay()];
     const gYear = now.getFullYear();
     const gMonth = now.getMonth() + 1;
     const gDay = now.getDate();
     
-    // تبدیل تقریبی میلادی به شمسی
     const jYear = gYear - 621;
     let jMonth = gMonth - 3;
     let jDay = gDay;
@@ -78,21 +76,18 @@ function initTelegramWebApp() {
     }
     
     updateDateTime();
-    setInterval(updateDateTime, 10000); // هر 10 ثانیه
+    setInterval(updateDateTime, 10000);
 }
 
 function updateUserInfo() {
-    // نام کاربر
     const userNameEl = document.getElementById('user-name');
     const welcomeUserEl = document.getElementById('welcome-user');
     if (userNameEl) userNameEl.textContent = userName;
     if (welcomeUserEl) welcomeUserEl.textContent = userName;
     
-    // User ID در تنظیمات
     const userIdEl = document.getElementById('user-id');
     if (userIdEl) userIdEl.textContent = userId || '-';
     
-    // عکس پروفایل
     const avatarEl = document.getElementById('user-avatar');
     if (avatarEl) {
         const fallbackUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=6366f1&color=fff&size=128&bold=true`;
@@ -239,7 +234,6 @@ function loadPageData(pageName) {
 async function loadDashboard() {
     console.log('📊 Loading dashboard...');
     
-    // نمایش loading
     const habitsEl = document.getElementById('stat-habits');
     if (habitsEl) habitsEl.textContent = '...';
     
@@ -248,7 +242,6 @@ async function loadDashboard() {
     if (result.success && result.data) {
         const { stats, income_chart, habits_chart, recent_activities } = result.data;
         
-        // آمار اصلی
         const incomeEl = document.getElementById('stat-income');
         const remindersEl = document.getElementById('stat-reminders');
         const notesEl = document.getElementById('stat-notes');
@@ -257,7 +250,6 @@ async function loadDashboard() {
         if (remindersEl) remindersEl.textContent = stats.today_reminders || 0;
         if (notesEl) notesEl.textContent = stats.total_notes || 0;
         
-        // عادت‌های امروز
         if (habitsEl) {
             if (stats.total_habits > 0) {
                 habitsEl.textContent = `${stats.completed_habits || 0}/${stats.total_habits}`;
@@ -266,7 +258,6 @@ async function loadDashboard() {
             }
         }
         
-        // نمودارها
         if (income_chart && income_chart.length > 0) {
             renderIncomeChart(income_chart);
         }
@@ -275,7 +266,6 @@ async function loadDashboard() {
             renderHabitsChart(habits_chart);
         }
         
-        // فعالیت‌ها
         const activitiesContainer = document.getElementById('recent-activities');
         if (activitiesContainer) {
             if (recent_activities && recent_activities.length > 0) {
@@ -324,6 +314,14 @@ function renderIncomeChart(data) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            layout: {
+                padding: {
+                    left: 16,
+                    right: 16,
+                    top: 8,
+                    bottom: 8
+                }
+            },
             plugins: { legend: { display: false } },
             scales: {
                 y: {
@@ -355,6 +353,14 @@ function renderHabitsChart(data) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            layout: {
+                padding: {
+                    left: 16,
+                    right: 16,
+                    top: 8,
+                    bottom: 8
+                }
+            },
             plugins: { legend: { display: false } },
             scales: {
                 y: { beginAtZero: true, ticks: { stepSize: 1 } }
@@ -364,7 +370,7 @@ function renderHabitsChart(data) {
 }
 
 // ────────────────────────────────────────────────────────────────
-// Incomes
+// Incomes - Material Design
 // ────────────────────────────────────────────────────────────────
 async function loadIncomes() {
     const result = await apiCall('incomes.php');
@@ -372,14 +378,27 @@ async function loadIncomes() {
     if (result.success && result.data) {
         const { incomes, stats } = result.data;
         
+        console.log('📊 Stats:', stats);
+        
+        // آمار بالای صفحه
         const totalEl = document.getElementById('income-total');
         const monthlyEl = document.getElementById('income-monthly');
         const inactiveEl = document.getElementById('income-inactive');
         
-        if (totalEl) totalEl.textContent = stats.total_active || 0;
-        if (monthlyEl) monthlyEl.textContent = formatMoney(stats.monthly_total || 0);
-        if (inactiveEl) inactiveEl.textContent = stats.total_inactive || 0;
+        if (totalEl) {
+            totalEl.textContent = stats.total_active || 0;
+            console.log('✅ Total active set:', stats.total_active);
+        }
+        if (monthlyEl) {
+            monthlyEl.textContent = formatMoney(stats.monthly_total || 0);
+            console.log('✅ Monthly total set:', stats.monthly_total);
+        }
+        if (inactiveEl) {
+            inactiveEl.textContent = stats.total_inactive || 0;
+            console.log('✅ Inactive set:', stats.total_inactive);
+        }
         
+        // لیست درآمدها - Material Design
         const container = document.getElementById('incomes-list');
         if (!container) return;
         
@@ -389,47 +408,40 @@ async function loadIncomes() {
         }
         
         container.innerHTML = incomes.map(inc => `
-            <div class="card hoverable" style="margin-bottom: 16px; cursor: pointer;" onclick="showIncomeDetail(${inc.id})">
-                <div class="card-content">
-                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
-                        <div>
-                            <span class="card-title" style="font-size: 1.2rem; font-weight: bold; margin: 0;">${inc.client_name}</span>
-                            ${inc.client_username ? `<p style="margin: 4px 0;"><a href="https://t.me/${inc.client_username.replace('@', '')}" target="_blank" class="blue-text" onclick="event.stopPropagation()">@${inc.client_username.replace('@', '')}</a></p>` : ''}
-                        </div>
-                        <span class="badge ${inc.is_active ? 'green' : 'grey'} white-text" style="padding: 4px 12px;">${inc.is_active ? 'فعال' : 'غیرفعال'}</span>
+            <div class="card hoverable" style="margin-bottom: 12px; border-radius: 12px; cursor: pointer; overflow: hidden;" onclick="showIncomeDetail(${inc.id})">
+                <div class="card-content" style="padding: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <h6 style="margin: 0; font-weight: bold; font-size: 1.1rem;">${inc.client_name}</h6>
+                        <span class="new badge ${inc.is_active ? 'green' : 'grey'}" data-badge-caption="" style="border-radius: 12px; padding: 4px 10px; font-size: 0.7rem;">${inc.is_active ? 'فعال' : 'غیرفعال'}</span>
                     </div>
                     
-                    <p class="grey-text" style="margin: 8px 0;">
-                        <i class="material-icons tiny" style="vertical-align: middle;">business_center</i>
-                        ${inc.service_type}
-                    </p>
+                    <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 12px;">
+                        <i class="material-icons tiny grey-text" style="font-size: 16px;">business_center</i>
+                        <span class="grey-text" style="font-size: 0.9rem;">${inc.service_type}</span>
+                    </div>
                     
-                    <div style="background: #f5f5f5; padding: 12px; border-radius: 8px; margin-top: 12px;">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                            <span>مبلغ ماهانه:</span>
-                            <strong class="green-text">${formatMoney(inc.monthly_amount)}</strong>
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; color: white; margin-bottom: 8px;">
+                        <div>
+                            <p style="margin: 0; font-size: 0.75rem; opacity: 0.9;">مبلغ ماهانه</p>
+                            <h6 style="margin: 4px 0 0 0; font-weight: bold;">${formatMoney(inc.monthly_amount)}</h6>
                         </div>
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                            <span>مدت فعالیت:</span>
-                            <strong>${inc.months} ماه</strong>
-                        </div>
-                        <div style="display: flex; justify-content: space-between;">
-                            <span>کل دریافتی:</span>
-                            <strong class="blue-text">${formatMoney(inc.total_earned)}</strong>
+                        <div style="text-align: left;">
+                            <p style="margin: 0; font-size: 0.75rem; opacity: 0.9;">مدت فعالیت</p>
+                            <h6 style="margin: 4px 0 0 0; font-weight: bold;">${inc.months} ماه</h6>
                         </div>
                     </div>
                     
                     ${inc.days_until_payment ? `
-                        <p class="orange-text" style="margin-top: 12px; text-align: center;">
-                            <i class="material-icons tiny" style="vertical-align: middle;">alarm</i>
-                            ${inc.days_until_payment} روز تا پرداخت بعدی
-                        </p>
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px; background: #fff3e0; border-radius: 8px;">
+                            <i class="material-icons orange-text" style="font-size: 18px;">schedule</i>
+                            <span class="orange-text" style="font-size: 0.85rem; font-weight: 500;">${inc.days_until_payment} روز تا پرداخت بعدی</span>
+                        </div>
                     ` : ''}
-                    
-                    <p class="center grey-text" style="margin-top: 12px; font-size: 0.9rem;">
-                        <i class="material-icons tiny" style="vertical-align: middle;">touch_app</i>
-                        کلیک برای جزئیات بیشتر
-                    </p>
+                </div>
+                
+                <div style="background: #f5f5f5; padding: 10px 16px; display: flex; justify-content: center; align-items: center; gap: 6px;">
+                    <i class="material-icons grey-text" style="font-size: 18px;">info</i>
+                    <span class="grey-text" style="font-size: 0.85rem;">کلیک برای جزئیات</span>
                 </div>
             </div>
         `).join('');
@@ -452,7 +464,7 @@ async function showIncomeDetail(incomeId) {
     if (titleEl) titleEl.textContent = 'جزئیات درآمد';
     
     const container = document.getElementById('income-detail-content');
-    if (container) container.innerHTML = '<div class="center"><div class="preloader-wrapper active"><div class="spinner-layer spinner-blue-only"><div class="circle-clipper left"><div class="circle"></div></div><div class="gap-patch"><div class="circle"></div></div><div class="circle-clipper right"><div class="circle"></div></div></div></div></div>';
+    if (container) container.innerHTML = '<div class="center" style="padding: 40px;"><div class="preloader-wrapper active"><div class="spinner-layer spinner-blue-only"><div class="circle-clipper left"><div class="circle"></div></div><div class="gap-patch"><div class="circle"></div></div><div class="circle-clipper right"><div class="circle"></div></div></div></div></div>';
     
     const result = await apiCall('income_details.php', { income_id: incomeId });
     
@@ -462,72 +474,78 @@ async function showIncomeDetail(incomeId) {
         if (!container) return;
         
         container.innerHTML = `
-            <div class="card">
+            <div class="card" style="border-radius: 12px;">
                 <div class="card-content">
-                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
                         <div>
                             <h5 style="margin: 0 0 8px 0;">${income.client_name}</h5>
-                            ${income.client_username ? `<p class="blue-text">@${income.client_username.replace('@', '')}</p>` : ''}
+                            ${income.client_username ? `
+                                <a href="https://t.me/${income.client_username.replace('@', '')}" target="_blank" class="blue-text" style="display: flex; align-items: center; gap: 4px;">
+                                    <i class="material-icons" style="font-size: 16px;">send</i>
+                                    @${income.client_username.replace('@', '')}
+                                </a>
+                            ` : ''}
                         </div>
-                        <span class="badge ${income.is_active ? 'green' : 'grey'} white-text">${income.is_active ? 'فعال' : 'غیرفعال'}</span>
+                        <span class="badge ${income.is_active ? 'green' : 'grey'} white-text" style="border-radius: 12px; padding: 6px 14px;">${income.is_active ? 'فعال' : 'غیرفعال'}</span>
                     </div>
                     
-                    <p class="grey-text" style="margin-top: 16px;">${income.service_type}</p>
-                    
-                    <div style="margin-top: 24px;">
-                        <h6>اطلاعات کلی</h6>
-                        <table class="striped">
-                            <tbody>
-                                <tr>
-                                    <td>مبلغ ماهانه</td>
-                                    <td class="left-align"><strong class="green-text">${formatMoney(income.monthly_amount)}</strong></td>
-                                </tr>
-                                <tr>
-                                    <td>روز پرداخت</td>
-                                    <td class="left-align">${income.payment_day ? income.payment_day + ' هر ماه' : '-'}</td>
-                                </tr>
-                                <tr>
-                                    <td>تاریخ شروع</td>
-                                    <td class="left-align">${income.start_date_fa}</td>
-                                </tr>
-                                ${income.bot_url ? `
-                                <tr>
-                                    <td>ربات</td>
-                                    <td class="left-align"><a href="${income.bot_url}" target="_blank" class="blue-text">مشاهده</a></td>
-                                </tr>
-                                ` : ''}
-                            </tbody>
-                        </table>
+                    <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 20px;">
+                        <i class="material-icons grey-text" style="font-size: 18px;">business_center</i>
+                        <span class="grey-text">${income.service_type}</span>
                     </div>
                     
-                    <div style="margin-top: 24px;">
-                        <h6>آمار عملکرد</h6>
-                        <div class="row" style="margin-top: 16px;">
-                            <div class="col s6">
-                                <div style="text-align: center; padding: 16px; background: #e3f2fd; border-radius: 8px;">
-                                    <p class="grey-text" style="margin: 0; font-size: 0.9rem;">مدت فعالیت</p>
-                                    <h5 style="margin: 8px 0 0 0; color: #1976d2;">${stats.months_active} ماه</h5>
-                                </div>
+                    <h6 style="margin-bottom: 12px;">اطلاعات کلی</h6>
+                    <table class="striped">
+                        <tbody>
+                            <tr>
+                                <td><i class="material-icons tiny grey-text" style="vertical-align: middle;">attach_money</i> مبلغ ماهانه</td>
+                                <td class="left-align"><strong class="green-text">${formatMoney(income.monthly_amount)}</strong></td>
+                            </tr>
+                            <tr>
+                                <td><i class="material-icons tiny grey-text" style="vertical-align: middle;">event</i> روز پرداخت</td>
+                                <td class="left-align">${income.payment_day ? income.payment_day + ' هر ماه' : '-'}</td>
+                            </tr>
+                            <tr>
+                                <td><i class="material-icons tiny grey-text" style="vertical-align: middle;">date_range</i> تاریخ شروع</td>
+                                <td class="left-align">${income.start_date_fa}</td>
+                            </tr>
+                            ${income.bot_url ? `
+                            <tr>
+                                <td><i class="material-icons tiny grey-text" style="vertical-align: middle;">smart_toy</i> ربات</td>
+                                <td class="left-align"><a href="${income.bot_url}" target="_blank" class="blue-text">مشاهده</a></td>
+                            </tr>
+                            ` : ''}
+                        </tbody>
+                    </table>
+                    
+                    <h6 style="margin: 24px 0 12px 0;">آمار عملکرد</h6>
+                    <div class="row" style="margin-bottom: 0;">
+                        <div class="col s6">
+                            <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; color: white;">
+                                <i class="material-icons" style="font-size: 32px; margin-bottom: 8px;">schedule</i>
+                                <p style="margin: 0; font-size: 0.8rem; opacity: 0.9;">مدت فعالیت</p>
+                                <h5 style="margin: 8px 0 0 0; font-weight: bold;">${stats.months_active} ماه</h5>
                             </div>
-                            <div class="col s6">
-                                <div style="text-align: center; padding: 16px; background: #e8f5e9; border-radius: 8px;">
-                                    <p class="grey-text" style="margin: 0; font-size: 0.9rem;">کل دریافتی</p>
-                                    <h5 style="margin: 8px 0 0 0; color: #388e3c;">${formatMoney(stats.total_earned)}</h5>
-                                </div>
+                        </div>
+                        <div class="col s6">
+                            <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 12px; color: white;">
+                                <i class="material-icons" style="font-size: 32px; margin-bottom: 8px;">trending_up</i>
+                                <p style="margin: 0; font-size: 0.8rem; opacity: 0.9;">کل دریافتی</p>
+                                <h6 style="margin: 8px 0 0 0; font-weight: bold; font-size: 0.95rem;">${formatMoney(stats.total_earned)}</h6>
                             </div>
                         </div>
-                        
-                        ${stats.days_until_payment > 0 ? `
-                        <div style="text-align: center; padding: 16px; background: #fff3e0; border-radius: 8px; margin-top: 16px;">
-                            <p class="grey-text" style="margin: 0; font-size: 0.9rem;">روزهای باقیمانده تا پرداخت</p>
-                            <h5 style="margin: 8px 0 0 0; color: #f57c00;">${stats.days_until_payment} روز</h5>
-                        </div>
-                        ` : ''}
                     </div>
+                    
+                    ${stats.days_until_payment > 0 ? `
+                    <div style="text-align: center; padding: 16px; background: #fff3e0; border-radius: 12px; margin-top: 16px;">
+                        <i class="material-icons orange-text" style="font-size: 28px;">alarm</i>
+                        <p style="margin: 8px 0 0 0; font-size: 0.9rem; color: #f57c00; font-weight: 500;">${stats.days_until_payment} روز تا پرداخت بعدی</p>
+                    </div>
+                    ` : ''}
                 </div>
             </div>
             
-            <div class="card" style="margin-top: 16px;">
+            <div class="card" style="margin-top: 16px; border-radius: 12px;">
                 <div class="card-content">
                     <h6>نمودار درآمد ۱۲ ماه اخیر</h6>
                     <div style="height: 250px; margin-top: 16px;">
@@ -536,7 +554,7 @@ async function showIncomeDetail(incomeId) {
                 </div>
             </div>
             
-            <button class="btn waves-effect waves-light blue" onclick="showPage('incomes')" style="width: 100%; margin-top: 16px;">
+            <button class="btn waves-effect waves-light blue" onclick="showPage('incomes')" style="width: 100%; margin-top: 16px; border-radius: 8px;">
                 <i class="material-icons left">arrow_forward</i>
                 بازگشت به لیست
             </button>
@@ -575,6 +593,14 @@ function renderIncomeDetailChart(data) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            layout: {
+                padding: {
+                    left: 16,
+                    right: 16,
+                    top: 8,
+                    bottom: 8
+                }
+            },
             plugins: { legend: { display: false } },
             scales: {
                 y: {
@@ -736,7 +762,7 @@ window.addEventListener('load', function() {
             } else if (app) {
                 app.style.display = 'block';
             }
-        }, 1000); // کاهش زمان splash
+        }, 1000);
     }
 });
 
