@@ -39,11 +39,6 @@ try {
     $stmt->execute();
     $stats['total_notes'] = $stmt->fetchColumn() ?? 0;
     
-    // وظایف فعال
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM tasks WHERE is_completed = 0");
-    $stmt->execute();
-    $stats['active_tasks'] = $stmt->fetchColumn() ?? 0;
-    
     // نمودار درآمد 6 ماه اخیر
     $income_chart = [];
     for ($i = 5; $i >= 0; $i--) {
