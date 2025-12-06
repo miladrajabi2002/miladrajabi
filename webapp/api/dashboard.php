@@ -41,9 +41,9 @@ try {
     $stmt->execute();
     $stats['total_notes'] = $stmt->fetchColumn() ?? 0;
     
-    // Total documents (with fallback if table doesn't exist)
+    // Total documents - NO is_active column!
     try {
-        $stmt = $pdo->prepare("SELECT COUNT(*) FROM documents WHERE is_active = 1");
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM documents");
         $stmt->execute();
         $stats['total_documents'] = $stmt->fetchColumn() ?? 0;
     } catch (Exception $e) {
