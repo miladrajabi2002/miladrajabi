@@ -1,19 +1,22 @@
-// ═══════════════════════════════════════════════════════════════
-// Telegram WebApp - Fully Fixed Version
-// ═══════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════
+// Telegram WebApp - Complete Fixed Version
+// ══════════════════════════════════════════════════════════════
 
 const tg = window.Telegram?.WebApp || {};
 const API_URL = './api/';
 const ALLOWED_USER_ID = 1253939828;
 
 let userId = null;
+let userName = 'میلاد'; // اسم پیش‌فرض
+let userPhoto = null;
 let hapticEnabled = true;
 let incomeChart = null;
 let habitsChart = null;
+let incomeDetailChart = null;
 
-// ───────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────
 // Initialize
-// ───────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────
 function initTelegramWebApp() {
     if (tg.ready) tg.ready();
     if (tg.expand) tg.expand();
@@ -21,36 +24,22 @@ function initTelegramWebApp() {
     const user = tg.initDataUnsafe?.user;
     if (user) {
         userId = user.id;
+        userName = user.first_name || 'میلاد';
+        userPhoto = user.photo_url;
         
-        console.log('👤 User info:', user);
+        console.log('👤 User:', userName, '| ID:', userId);
         
         if (userId !== ALLOWED_USER_ID) {
             showAccessDenied();
             return;
         }
-        
-        const userName = user.first_name || 'کاربر';
-        
-        const userNameEl = document.getElementById('user-name');
-        const welcomeUserEl = document.getElementById('welcome-user');
-        if (userNameEl) userNameEl.textContent = userName;
-        if (welcomeUserEl) welcomeUserEl.textContent = userName;
-        
-        // عکس پروفایل
-        const avatarEl = document.getElementById('user-avatar');
-        if (avatarEl) {
-            const avatarUrl = user.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=6366f1&color=fff&size=128&bold=true`;
-            avatarEl.src = avatarUrl;
-            avatarEl.onerror = function() {
-                this.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=6366f1&color=fff&size=128&bold=true`;
-            };
-        }
-        
-        console.log('✅ User authorized:', userId);
     } else {
         userId = ALLOWED_USER_ID;
         console.log('⚠️ Testing mode');
     }
+    
+    // Update UI
+    updateUserInfo();
     
     if (tg.colorScheme === 'dark') {
         document.body.classList.add('dark-mode');
@@ -58,6 +47,26 @@ function initTelegramWebApp() {
     
     updateDateTime();
     setInterval(updateDateTime, 60000);
+}
+
+function updateUserInfo() {
+    // نام کاربر
+    const userNameEl = document.getElementById('user-name');
+    const welcomeUserEl = document.getElementById('welcome-user');
+    if (userNameEl) userNameEl.textContent = userName;
+    if (welcomeUserEl) welcomeUserEl.textContent = userName;
+    
+    // User ID در تنظیمات
+    const userIdEl = document.getElementById('user-id');
+    if (userIdEl) userIdEl.textContent = userId;
+    
+    // عکس پروفایل
+    const avatarEl = document.getElementById('user-avatar');
+    if (avatarEl) {
+        const fallbackUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=6366f1&color=fff&size=128&bold=true`;
+        avatarEl.src = userPhoto || fallbackUrl;
+        avatarEl.onerror = () => avatarEl.src = fallbackUrl;
+    }
 }
 
 function showAccessDenied() {
@@ -88,28 +97,21 @@ function updateDateTime() {
 }
 
 function initMaterialize() {
-    // بدون jQuery - مستقیم با vanilla JS
     if (typeof M !== 'undefined') {
         const sidenavElems = document.querySelectorAll('.sidenav');
-        if (sidenavElems.length > 0) {
-            M.Sidenav.init(sidenavElems);
-        }
+        if (sidenavElems.length > 0) M.Sidenav.init(sidenavElems);
         
         const fabElems = document.querySelectorAll('.fixed-action-btn');
-        if (fabElems.length > 0) {
-            M.FloatingActionButton.init(fabElems);
-        }
+        if (fabElems.length > 0) M.FloatingActionButton.init(fabElems);
     }
 }
 
-// ───────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────
 // API Calls
-// ───────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────
 async function apiCall(endpoint, data = {}) {
     try {
         const url = API_URL + endpoint;
-        console.log('🔄 Calling:', url);
-        
         const response = await fetch(url, {
             method: 'POST',
             headers: { 
@@ -119,9 +121,7 @@ async function apiCall(endpoint, data = {}) {
             body: JSON.stringify({ user_id: userId, ...data })
         });
         
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         
         const result = await response.json();
         console.log('✅', endpoint, '→', result.success ? 'OK' : 'FAIL');
@@ -133,9 +133,9 @@ async function apiCall(endpoint, data = {}) {
     }
 }
 
-// ───────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────
 // Format Money
-// ───────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────
 function formatMoney(amount) {
     if (!amount || amount === 0) return '۰';
     
@@ -156,24 +156,22 @@ function formatMoney(amount) {
     return toPersian(num);
 }
 
-// ───────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────
 // Page Navigation
-// ───────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────
 function showPage(pageName) {
-    console.log('📄 Show page:', pageName);
+    console.log('📄', pageName);
     
-    // تغییر صفحه
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     const targetPage = document.getElementById(pageName + '-page');
     if (targetPage) targetPage.classList.add('active');
     
-    // تغییر nav
     document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
     
-    // عنوان
     const titles = {
         dashboard: 'داشبورد',
         incomes: 'درآمدها',
+        'income-detail': 'جزئیات درآمد',
         reminders: 'یادآورها',
         notes: 'یادداشت‌ها',
         habits: 'عادت‌ها',
@@ -183,7 +181,6 @@ function showPage(pageName) {
     const titleEl = document.getElementById('page-title');
     if (titleEl) titleEl.textContent = titles[pageName] || 'داشبورد';
     
-    // بستن منو
     if (typeof M !== 'undefined') {
         const sidenavElem = document.querySelector('.sidenav');
         if (sidenavElem) {
@@ -192,10 +189,8 @@ function showPage(pageName) {
         }
     }
     
-    // بارگذاری دیتا
     loadPageData(pageName);
     
-    // Haptic
     if (hapticEnabled && tg.HapticFeedback) {
         tg.HapticFeedback.impactOccurred('light');
     }
@@ -211,9 +206,9 @@ function loadPageData(pageName) {
     }
 }
 
-// ───────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────
 // Dashboard
-// ───────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────
 async function loadDashboard() {
     console.log('📊 Loading dashboard...');
     const result = await apiCall('dashboard.php');
@@ -221,7 +216,7 @@ async function loadDashboard() {
     if (result.success && result.data) {
         const { stats, income_chart, habits_chart, recent_activities } = result.data;
         
-        // آمار
+        // آمار اصلی
         const incomeEl = document.getElementById('stat-income');
         const remindersEl = document.getElementById('stat-reminders');
         const habitsEl = document.getElementById('stat-habits');
@@ -229,35 +224,42 @@ async function loadDashboard() {
         
         if (incomeEl) incomeEl.textContent = formatMoney(stats.monthly_income);
         if (remindersEl) remindersEl.textContent = stats.today_reminders || 0;
-        if (habitsEl) habitsEl.textContent = `${stats.completed_habits || 0}/${stats.total_habits || 0}`;
+        if (habitsEl) {
+            if (stats.total_habits > 0) {
+                habitsEl.textContent = `${stats.completed_habits || 0}/${stats.total_habits}`;
+            } else {
+                habitsEl.textContent = 'ندارید';
+            }
+        }
         if (notesEl) notesEl.textContent = stats.total_notes || 0;
         
-        // نمودارها
+        // نمودار درآمد
         if (income_chart && income_chart.length > 0) {
             renderIncomeChart(income_chart);
         }
         
+        // نمودار عادت‌ها
         if (habits_chart && habits_chart.length > 0) {
             renderHabitsChart(habits_chart);
         }
         
         // فعالیت‌ها
-        if (recent_activities && recent_activities.length > 0) {
-            const container = document.getElementById('recent-activities');
-            if (container) {
-                container.innerHTML = recent_activities.map(act => `
+        const activitiesContainer = document.getElementById('recent-activities');
+        if (activitiesContainer) {
+            if (recent_activities && recent_activities.length > 0) {
+                activitiesContainer.innerHTML = recent_activities.map(act => `
                     <li class="collection-item avatar">
                         <i class="material-icons circle ${act.color}">${act.icon}</i>
                         <span class="title">${act.title}</span>
                         <p class="grey-text">${act.time}</p>
                     </li>
                 `).join('');
+            } else {
+                activitiesContainer.innerHTML = '<li class="collection-item center grey-text">فعالیتی ثبت نشده</li>';
             }
         }
         
-        console.log('✅ Dashboard loaded');
-    } else {
-        console.warn('⚠️ Dashboard failed, showing demo');
+        console.log('✅ Dashboard OK');
     }
 }
 
@@ -296,8 +298,6 @@ function renderIncomeChart(data) {
             }
         }
     });
-    
-    console.log('✅ Income chart OK');
 }
 
 function renderHabitsChart(data) {
@@ -326,19 +326,18 @@ function renderHabitsChart(data) {
             }
         }
     });
-    
-    console.log('✅ Habits chart OK');
 }
 
-// ───────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────
 // Incomes
-// ───────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────
 async function loadIncomes() {
     const result = await apiCall('incomes.php');
     
     if (result.success && result.data) {
         const { incomes, stats } = result.data;
         
+        // آمار بالای صفحه
         const totalEl = document.getElementById('income-total');
         const monthlyEl = document.getElementById('income-monthly');
         const inactiveEl = document.getElementById('income-inactive');
@@ -347,6 +346,7 @@ async function loadIncomes() {
         if (monthlyEl) monthlyEl.textContent = formatMoney(stats.monthly_total || 0);
         if (inactiveEl) inactiveEl.textContent = stats.total_inactive || 0;
         
+        // لیست درآمدها
         const container = document.getElementById('incomes-list');
         if (!container) return;
         
@@ -355,26 +355,207 @@ async function loadIncomes() {
             return;
         }
         
-        container.innerHTML = '<ul class="collection">' + incomes.map(inc => `
-            <li class="collection-item hoverable" style="cursor: pointer;">
-                <div>
-                    <span class="title">${inc.client_name}</span>
-                    ${inc.client_username ? `<a href="https://t.me/${inc.client_username.replace('@', '')}" class="grey-text"> @${inc.client_username.replace('@', '')}</a>` : ''}
-                    <p class="grey-text">${inc.service_type}</p>
-                    <p class="grey-text">ماهانه: <strong>${formatMoney(inc.monthly_amount)}</strong></p>
-                    <p class="grey-text">${inc.months} ماه | کل: ${formatMoney(inc.total_earned)}</p>
+        container.innerHTML = incomes.map(inc => `
+            <div class="card hoverable" style="margin-bottom: 16px; cursor: pointer;" onclick="showIncomeDetail(${inc.id})">
+                <div class="card-content">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+                        <div>
+                            <span class="card-title" style="font-size: 1.2rem; font-weight: bold; margin: 0;">${inc.client_name}</span>
+                            ${inc.client_username ? `<p style="margin: 4px 0;"><a href="https://t.me/${inc.client_username.replace('@', '')}" target="_blank" class="blue-text" onclick="event.stopPropagation()">@${inc.client_username.replace('@', '')}</a></p>` : ''}
+                        </div>
+                        <span class="badge ${inc.is_active ? 'green' : 'grey'} white-text" style="padding: 4px 12px;">${inc.is_active ? 'فعال' : 'غیرفعال'}</span>
+                    </div>
+                    
+                    <p class="grey-text" style="margin: 8px 0;">
+                        <i class="material-icons tiny" style="vertical-align: middle;">business_center</i>
+                        ${inc.service_type}
+                    </p>
+                    
+                    <div style="background: #f5f5f5; padding: 12px; border-radius: 8px; margin-top: 12px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span>مبلغ ماهانه:</span>
+                            <strong class="green-text">${formatMoney(inc.monthly_amount)}</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span>مدت فعالیت:</span>
+                            <strong>${inc.months} ماه</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>کل دریافتی:</span>
+                            <strong class="blue-text">${formatMoney(inc.total_earned)}</strong>
+                        </div>
+                    </div>
+                    
+                    ${inc.days_until_payment ? `
+                        <p class="orange-text" style="margin-top: 12px; text-align: center;">
+                            <i class="material-icons tiny" style="vertical-align: middle;">alarm</i>
+                            ${inc.days_until_payment} روز تا پرداخت بعدی
+                        </p>
+                    ` : ''}
+                    
+                    <p class="center grey-text" style="margin-top: 12px; font-size: 0.9rem;">
+                        <i class="material-icons tiny" style="vertical-align: middle;">touch_app</i>
+                        کلیک برای جزئیات بیشتر
+                    </p>
                 </div>
-                <span class="secondary-content">
-                    <span class="badge ${inc.is_active ? 'green' : 'grey'} white-text">${inc.is_active ? 'فعال' : 'غیرفعال'}</span>
-                </span>
-            </li>
-        `).join('') + '</ul>';
+            </div>
+        `).join('');
+        
+        console.log('✅ Incomes loaded:', incomes.length);
     }
 }
 
-// ───────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────
+// Income Detail
+// ────────────────────────────────────────────────────────────────
+async function showIncomeDetail(incomeId) {
+    if (hapticEnabled && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+    
+    // نمایش صفحه جزئیات
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    const detailPage = document.getElementById('income-detail-page');
+    if (detailPage) detailPage.classList.add('active');
+    
+    const titleEl = document.getElementById('page-title');
+    if (titleEl) titleEl.textContent = 'جزئیات درآمد';
+    
+    // بارگذاری دیتا
+    const result = await apiCall('income_details.php', { income_id: incomeId });
+    
+    if (result.success && result.data) {
+        const { income, stats, monthly_chart } = result.data;
+        
+        const container = document.getElementById('income-detail-content');
+        if (!container) return;
+        
+        container.innerHTML = `
+            <div class="card">
+                <div class="card-content">
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <div>
+                            <h5 style="margin: 0 0 8px 0;">${income.client_name}</h5>
+                            ${income.client_username ? `<p class="blue-text">@${income.client_username.replace('@', '')}</p>` : ''}
+                        </div>
+                        <span class="badge ${income.is_active ? 'green' : 'grey'} white-text">${income.is_active ? 'فعال' : 'غیرفعال'}</span>
+                    </div>
+                    
+                    <p class="grey-text" style="margin-top: 16px;">${income.service_type}</p>
+                    
+                    <div style="margin-top: 24px;">
+                        <h6>اطلاعات کلی</h6>
+                        <table class="striped">
+                            <tbody>
+                                <tr>
+                                    <td>مبلغ ماهانه</td>
+                                    <td class="left-align"><strong class="green-text">${formatMoney(income.monthly_amount)}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>روز پرداخت</td>
+                                    <td class="left-align">${income.payment_day ? income.payment_day + ' هر ماه' : '-'}</td>
+                                </tr>
+                                <tr>
+                                    <td>تاریخ شروع</td>
+                                    <td class="left-align">${income.start_date_fa}</td>
+                                </tr>
+                                ${income.bot_url ? `
+                                <tr>
+                                    <td>ربات</td>
+                                    <td class="left-align"><a href="${income.bot_url}" target="_blank" class="blue-text">مشاهده</a></td>
+                                </tr>
+                                ` : ''}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div style="margin-top: 24px;">
+                        <h6>آمار عملکرد</h6>
+                        <div class="row" style="margin-top: 16px;">
+                            <div class="col s6">
+                                <div style="text-align: center; padding: 16px; background: #e3f2fd; border-radius: 8px;">
+                                    <p class="grey-text" style="margin: 0; font-size: 0.9rem;">مدت فعالیت</p>
+                                    <h5 style="margin: 8px 0 0 0; color: #1976d2;">${stats.months_active} ماه</h5>
+                                </div>
+                            </div>
+                            <div class="col s6">
+                                <div style="text-align: center; padding: 16px; background: #e8f5e9; border-radius: 8px;">
+                                    <p class="grey-text" style="margin: 0; font-size: 0.9rem;">کل دریافتی</p>
+                                    <h5 style="margin: 8px 0 0 0; color: #388e3c;">${formatMoney(stats.total_earned)}</h5>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        ${stats.days_until_payment > 0 ? `
+                        <div style="text-align: center; padding: 16px; background: #fff3e0; border-radius: 8px; margin-top: 16px;">
+                            <p class="grey-text" style="margin: 0; font-size: 0.9rem;">روزهای باقیمانده تا پرداخت</p>
+                            <h5 style="margin: 8px 0 0 0; color: #f57c00;">${stats.days_until_payment} روز</h5>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card" style="margin-top: 16px;">
+                <div class="card-content">
+                    <h6>نمودار درآمد ۱۲ ماه اخیر</h6>
+                    <div style="height: 250px; margin-top: 16px;">
+                        <canvas id="incomeDetailChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="btn waves-effect waves-light blue" onclick="showPage('incomes')" style="width: 100%; margin-top: 16px;">
+                <i class="material-icons left">arrow_forward</i>
+                بازگشت به لیست
+            </button>
+        `;
+        
+        // رسم نمودار
+        renderIncomeDetailChart(monthly_chart);
+        
+        console.log('✅ Income detail loaded');
+    }
+}
+
+function renderIncomeDetailChart(data) {
+    const ctx = document.getElementById('incomeDetailChart');
+    if (!ctx || typeof Chart === 'undefined') return;
+    
+    if (incomeDetailChart) incomeDetailChart.destroy();
+    
+    incomeDetailChart = new Chart(ctx.getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: data.map(d => d.month),
+            datasets: [{
+                label: 'درآمد',
+                data: data.map(d => {
+                    const num = typeof d.amount === 'string' ? parseFloat(d.amount) : d.amount;
+                    return Math.ceil(num / 1000000);
+                }),
+                borderColor: '#2196f3',
+                backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                tension: 0.4,
+                fill: true,
+                borderWidth: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { callback: v => v + ' میلیون' }
+                }
+            }
+        }
+    });
+}
+
+// ────────────────────────────────────────────────────────────────
 // Habits
-// ───────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────
 async function loadHabits() {
     const result = await apiCall('habits.php', { action: 'list' });
     
@@ -425,9 +606,9 @@ async function toggleHabit(habitId) {
     }
 }
 
-// ───────────────────────────────────────────────────────────────
-// Reminders
-// ───────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────
+// Reminders & Notes
+// ────────────────────────────────────────────────────────────────
 async function loadReminders() {
     const result = await apiCall('reminders.php');
     
@@ -449,14 +630,9 @@ async function loadReminders() {
                 <p class="grey-text">ساعت: ${rem.time_fa}</p>
             </li>
         `).join('') + '</ul>';
-        
-        console.log('✅ Reminders loaded:', reminders.length);
     }
 }
 
-// ───────────────────────────────────────────────────────────────
-// Notes
-// ───────────────────────────────────────────────────────────────
 async function loadNotes() {
     const result = await apiCall('notes.php');
     
@@ -478,14 +654,12 @@ async function loadNotes() {
                 </div>
             </div>
         `).join('');
-        
-        console.log('✅ Notes loaded:', notes.length);
     }
 }
 
-// ───────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────
 // Dark Mode
-// ───────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
     const darkToggle = document.getElementById('dark-mode-toggle');
     const hapticToggle = document.getElementById('haptic-toggle');
@@ -504,9 +678,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// ───────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────
 // App Init
-// ───────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────
 window.addEventListener('load', function() {
     console.log('🚀 App init...');
     
@@ -536,3 +710,4 @@ window.addEventListener('load', function() {
 // Export
 window.showPage = showPage;
 window.toggleHabit = toggleHabit;
+window.showIncomeDetail = showIncomeDetail;
