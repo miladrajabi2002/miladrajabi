@@ -79,7 +79,7 @@
                         </div>
                     </div>
 
-                    <!-- Quick Stats Grid -->
+                    <!-- Quick Stats Grid - 4 Cards -->
                     <div class="row">
                         <div class="col s6">
                             <div class="stat-card blue-card hoverable">
@@ -97,6 +97,24 @@
                                 </div>
                                 <h6 class="stat-value" id="stat-habits">0/0</h6>
                                 <p class="stat-label">عادت‌های امروز</p>
+                            </div>
+                        </div>
+                        <div class="col s6">
+                            <div class="stat-card purple-card hoverable">
+                                <div class="stat-icon-wrapper">
+                                    <i class="material-icons">description</i>
+                                </div>
+                                <h6 class="stat-value" id="stat-documents">0</h6>
+                                <p class="stat-label">اسناد</p>
+                            </div>
+                        </div>
+                        <div class="col s6">
+                            <div class="stat-card orange-card hoverable">
+                                <div class="stat-icon-wrapper">
+                                    <i class="material-icons">emoji_events</i>
+                                </div>
+                                <h6 class="stat-value" id="stat-goals">0/0</h6>
+                                <p class="stat-label">هدف‌های فعال</p>
                             </div>
                         </div>
                     </div>
@@ -187,6 +205,23 @@
                 </div>
             </div>
 
+            <!-- Habits Page -->
+            <div id="habits-page" class="page">
+                <div class="container">
+                    <!-- Stats Card -->
+                    <div class="card hoverable gradient-card">
+                        <div class="card-content white-text">
+                            <h6 class="mb-1">نرخ موفقیت امروز</h6>
+                            <h3 class="mb-0" id="habits-success-rate">0%</h3>
+                            <p class="mb-0 opacity-80"><span id="habits-completed-today">0</span> از <span id="habits-total-today">0</span> عادت</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Habits List -->
+                    <div id="habits-list"></div>
+                </div>
+            </div>
+
             <!-- Incomes Page -->
             <div id="incomes-page" class="page">
                 <div class="container">
@@ -248,6 +283,54 @@
                 </div>
             </div>
 
+            <!-- Goals Page - NEW -->
+            <div id="goals-page" class="page">
+                <div class="container">
+                    <!-- Stats Card -->
+                    <div class="card hoverable gradient-card-orange">
+                        <div class="card-content white-text">
+                            <h6 class="mb-1">پیشرفت کلی هدف‌ها</h6>
+                            <h3 class="mb-0" id="goals-overall-progress">0%</h3>
+                            <p class="mb-0 opacity-80"><span id="goals-completed">0</span> از <span id="goals-total">0</span> هدف تکمیل شده</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Mini Stats -->
+                    <div class="row">
+                        <div class="col s4">
+                            <div class="mini-stat green white-text">
+                                <i class="material-icons">check_circle</i>
+                                <div>
+                                    <h6 id="goals-completed-count">0</h6>
+                                    <p>تکمیل شده</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col s4">
+                            <div class="mini-stat blue white-text">
+                                <i class="material-icons">pending_actions</i>
+                                <div>
+                                    <h6 id="goals-active-count">0</h6>
+                                    <p>در حال اجرا</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col s4">
+                            <div class="mini-stat grey white-text">
+                                <i class="material-icons">schedule</i>
+                                <div>
+                                    <h6 id="goals-pending-count">0</h6>
+                                    <p>در انتظار</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Goals List -->
+                    <div id="goals-list"></div>
+                </div>
+            </div>
+
             <!-- Notes Page -->
             <div id="notes-page" class="page">
                 <div class="container">
@@ -260,23 +343,6 @@
                             <div id="notes-list"></div>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <!-- Habits Page -->
-            <div id="habits-page" class="page">
-                <div class="container">
-                    <!-- Stats Card -->
-                    <div class="card hoverable gradient-card">
-                        <div class="card-content white-text">
-                            <h6 class="mb-1">نرخ موفقیت امروز</h6>
-                            <h3 class="mb-0" id="habits-success-rate">0%</h3>
-                            <p class="mb-0 opacity-80"><span id="habits-completed-today">0</span> از <span id="habits-total-today">0</span> عادت</p>
-                        </div>
-                    </div>
-                    
-                    <!-- Habits List -->
-                    <div id="habits-list"></div>
                 </div>
             </div>
 
@@ -331,27 +397,27 @@
 
         </main>
 
-        <!-- Bottom Navigation -->
+        <!-- Bottom Navigation - Updated Order -->
         <div class="bottom-nav">
-            <div class="nav-item active" onclick="showPage('dashboard')" data-page="dashboard">
-                <i class="material-icons">dashboard</i>
-                <span>داشبورد</span>
+            <div class="nav-item" onclick="showPage('habits')" data-page="habits">
+                <i class="material-icons">track_changes</i>
+                <span>عادت‌ها</span>
             </div>
             <div class="nav-item" onclick="showPage('incomes')" data-page="incomes">
                 <i class="material-icons">monetization_on</i>
                 <span>درآمد</span>
             </div>
-            <div class="nav-item" onclick="showPage('habits')" data-page="habits">
-                <i class="material-icons">track_changes</i>
-                <span>عادت‌ها</span>
+            <div class="nav-item active" onclick="showPage('dashboard')" data-page="dashboard">
+                <i class="material-icons">dashboard</i>
+                <span>داشبورد</span>
             </div>
             <div class="nav-item" onclick="showPage('reminders')" data-page="reminders">
                 <i class="material-icons">notifications</i>
                 <span>یادآور</span>
             </div>
-            <div class="nav-item" onclick="showPage('notes')" data-page="notes">
-                <i class="material-icons">note</i>
-                <span>یادداشت</span>
+            <div class="nav-item" onclick="showPage('goals')" data-page="goals">
+                <i class="material-icons">emoji_events</i>
+                <span>هدف‌ها</span>
             </div>
         </div>
 
