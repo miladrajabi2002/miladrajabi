@@ -1,14 +1,18 @@
 <?php
-require_once '../config.php';
+// ════════════════════════════════════════════════════════════════
+// جزئیات درآمد - Income Details
+// ════════════════════════════════════════════════════════════════
+
+// مسیر درست config.php (یک پوشه بالاتر از api)
+require_once __DIR__ . '/../config.php';
 
 // دریافت پارامترها
 $input = json_decode(file_get_contents('php://input'), true);
 $income_id = $input['income_id'] ?? $_GET['income_id'] ?? $_POST['income_id'] ?? null;
 
 // بررسی income_id
-if (!$income_id) {
-    jsonResponse(false, null, 'شناسه درآمد الزامی است');
-    exit;
+if (!$income_id || !is_numeric($income_id)) {
+    jsonResponse(false, null, 'شناسه درآمد نامعتبر است');
 }
 
 try {
@@ -35,7 +39,6 @@ try {
     
     if (!$income) {
         jsonResponse(false, null, 'درآمد یافت نشد');
-        exit;
     }
     
     // محاسبات
@@ -93,5 +96,7 @@ try {
     ]);
     
 } catch (Exception $e) {
-    jsonResponse(false, null, 'خطا: ' . $e->getMessage());
+    // Log error for debugging
+    error_log('Income Details Error: ' . $e->getMessage());
+    jsonResponse(false, null, 'خطا در بارگذاری جزئیات');
 }
