@@ -28,7 +28,7 @@ try {
             start_date,
             bot_url,
             is_active,
-            notes,
+            description,
             DATEDIFF(CURDATE(), start_date) as days_passed,
             TIMESTAMPDIFF(MONTH, start_date, CURDATE()) as months_passed
         FROM incomes 
