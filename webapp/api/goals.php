@@ -1,6 +1,6 @@
 <?php
 // ════════════════════════════════════════════════════════════════
-// Goals API - Complete CRUD Operations
+// Goals API - Fixed for Real Database Schema (No is_active)
 // ════════════════════════════════════════════════════════════════
 
 require_once __DIR__ . '/../config.php';
@@ -13,26 +13,20 @@ if (!$user_id) {
 }
 
 try {
-    // Get all goals with progress calculation
+    // Get all goals - NO is_active column
     $stmt = $pdo->prepare("
         SELECT 
             id,
             title,
             description,
-            start_date,
-            end_date,
+            target_date,
             progress,
-            status,
+            is_completed,
             created_at
         FROM goals 
-        WHERE is_active = 1
         ORDER BY 
-            CASE status
-                WHEN 'in-progress' THEN 1
-                WHEN 'pending' THEN 2
-                WHEN 'completed' THEN 3
-                ELSE 4
-            END,
+            is_completed ASC,
+            target_date ASC,
             created_at DESC
     ");
     $stmt->execute();
@@ -40,37 +34,44 @@ try {
     
     // Process each goal
     $processed_goals = [];
+    $now = time();
+    
     foreach ($goals as $goal) {
-        $start_date = strtotime($goal['start_date']);
-        $end_date = $goal['end_date'] ? strtotime($goal['end_date']) : null;
-        $now = time();
+        $target_date = $goal['target_date'] ? strtotime($goal['target_date']) : null;
+        $created_at = strtotime($goal['created_at']);
+        
+        // Calculate status based on is_completed and target_date
+        if ($goal['is_completed']) {
+            $status = 'completed';
+            $status_text = 'تکمیل شده';
+        } elseif ($target_date && $target_date < $now) {
+            $status = 'pending';
+            $status_text = 'منقضی شده';
+        } elseif ($goal['progress'] > 0) {
+            $status = 'in-progress';
+            $status_text = 'در حال اجرا';
+        } else {
+            $status = 'pending';
+            $status_text = 'در انتظار';
+        }
         
         // Calculate days remaining
         $days_remaining = null;
-        if ($end_date && $end_date > $now) {
-            $days_remaining = ceil(($end_date - $now) / 86400);
-        }
-        
-        // Auto-update status based on dates and progress
-        $status = $goal['status'];
-        if ($goal['progress'] >= 100) {
-            $status = 'completed';
-        } elseif ($end_date && $end_date < $now && $status !== 'completed') {
-            $status = 'pending';
-        } elseif ($start_date <= $now && $status === 'pending') {
-            $status = 'in-progress';
+        if ($target_date && $target_date > $now && !$goal['is_completed']) {
+            $days_remaining = ceil(($target_date - $now) / 86400);
         }
         
         $processed_goals[] = [
             'id' => $goal['id'],
             'title' => $goal['title'],
             'description' => $goal['description'],
-            'start_date' => $goal['start_date'],
-            'end_date' => $goal['end_date'],
-            'start_date_fa' => jdate('j F Y', $start_date),
-            'end_date_fa' => $end_date ? jdate('j F Y', $end_date) : null,
+            'target_date' => $goal['target_date'],
+            'target_date_fa' => $target_date ? jdate('j F Y', $target_date) : null,
+            'created_date_fa' => jdate('j F Y', $created_at),
             'progress' => (int)$goal['progress'],
+            'is_completed' => (bool)$goal['is_completed'],
             'status' => $status,
+            'status_text' => $status_text,
             'days_remaining' => $days_remaining
         ];
     }
@@ -78,9 +79,9 @@ try {
     // Calculate statistics
     $stats = [
         'total' => count($processed_goals),
-        'completed' => count(array_filter($processed_goals, fn($g) => $g['status'] === 'completed')),
+        'completed' => count(array_filter($processed_goals, fn($g) => $g['is_completed'])),
         'active' => count(array_filter($processed_goals, fn($g) => $g['status'] === 'in-progress')),
-        'pending' => count(array_filter($processed_goals, fn($g) => $g['status'] === 'pending'))
+        'pending' => count(array_filter($processed_goals, fn($g) => $g['status'] === 'pending' && !$g['is_completed']))
     ];
     
     // Calculate overall progress
@@ -98,5 +99,5 @@ try {
     
 } catch (Exception $e) {
     error_log('Goals Error: ' . $e->getMessage());
-    jsonResponse(false, null, 'خطا در دریافت هدف‌ها');
+    jsonResponse(false, null, 'خطا در دریافت هدف‌ها: ' . $e->getMessage());
 }

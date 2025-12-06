@@ -1,6 +1,6 @@
 <?php
 // ════════════════════════════════════════════════════════════════
-// Dashboard API - Enhanced with Goals & Documents
+// Dashboard API - Fixed for Real Database Schema
 // ════════════════════════════════════════════════════════════════
 
 require_once __DIR__ . '/../config.php';
@@ -41,17 +41,21 @@ try {
     $stmt->execute();
     $stats['total_notes'] = $stmt->fetchColumn() ?? 0;
     
-    // Total documents (NEW)
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM documents WHERE is_active = 1");
-    $stmt->execute();
-    $stats['total_documents'] = $stmt->fetchColumn() ?? 0;
+    // Total documents (with fallback if table doesn't exist)
+    try {
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM documents WHERE is_active = 1");
+        $stmt->execute();
+        $stats['total_documents'] = $stmt->fetchColumn() ?? 0;
+    } catch (Exception $e) {
+        $stats['total_documents'] = 0;
+    }
     
-    // Goals stats (NEW)
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM goals WHERE is_active = 1 AND status = 'completed'");
+    // Goals stats - NO is_active column!
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM goals WHERE is_completed = 1");
     $stmt->execute();
     $stats['goals_completed'] = $stmt->fetchColumn() ?? 0;
     
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM goals WHERE is_active = 1");
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM goals");
     $stmt->execute();
     $stats['goals_total'] = $stmt->fetchColumn() ?? 0;
     
@@ -95,5 +99,5 @@ try {
     
 } catch (Exception $e) {
     error_log('Dashboard Error: ' . $e->getMessage());
-    jsonResponse(false, null, 'خطا در دریافت اطلاعات');
+    jsonResponse(false, null, 'خطا در دریافت اطلاعات: ' . $e->getMessage());
 }
