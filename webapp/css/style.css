@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Modern Blue Theme - Enhanced Design
+   Modern Blue Theme - Enhanced Design with Charts
    ═══════════════════════════════════════════════════════════════ */
 
 :root {
@@ -71,6 +71,16 @@ body {
 @keyframes pulse {
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.05); }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
 /* ─────────────────────────────────────────────────────────────── */
@@ -156,11 +166,6 @@ body {
     display: block;
 }
 
-keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
 /* ─────────────────────────────────────────────────────────────── */
 /* Cards */
 /* ─────────────────────────────────────────────────────────────── */
@@ -170,17 +175,16 @@ keyframes fadeIn {
     margin: 1rem 0;
     border: 1px solid var(--border-color);
     box-shadow: var(--shadow-sm) !important;
-    transition: all 0.3s ease;
-}
-
-@keyframes rotate {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .card.hoverable:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg) !important;
+}
+
+.card.hoverable:active {
     transform: translateY(-2px);
-    box-shadow: var(--shadow-md) !important;
 }
 
 .card-title {
@@ -249,7 +253,6 @@ keyframes fadeIn {
     right: -20%;
 }
 
-
 .blue-card {
     background: linear-gradient(135deg, #1976D2 0%, #0D47A1 100%);
 }
@@ -311,6 +314,72 @@ keyframes fadeIn {
     opacity: 0.9;
 }
 
+/* ─────────────────────────────────────────────────────────────── */
+/* Charts - Enhanced with Skeleton & Animations */
+/* ─────────────────────────────────────────────────────────────── */
+.chart-container {
+    position: relative;
+    height: 220px;
+    margin-top: 1rem;
+    padding: 0 8px;
+    transition: all 0.3s ease;
+}
+
+.chart-container:hover {
+    transform: translateY(-2px);
+}
+
+/* Skeleton Shimmer Animation */
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+.chart-skeleton {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10;
+    background: var(--bg-card);
+    border-radius: 8px;
+    transition: opacity 0.3s ease;
+}
+
+/* Chart Loading State */
+.chart-loading {
+    position: relative;
+    overflow: hidden;
+}
+
+.chart-loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.3),
+        transparent
+    );
+    animation: chart-shimmer 2s infinite;
+}
+
+@keyframes chart-shimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+@media (max-width: 600px) {
+    .chart-container {
+        height: 200px;
+        padding: 0 16px;
+    }
+}
 
 /* ─────────────────────────────────────────────────────────────── */
 /* Habits List */
@@ -437,23 +506,6 @@ keyframes fadeIn {
 }
 
 /* ─────────────────────────────────────────────────────────────── */
-/* Charts */
-/* ─────────────────────────────────────────────────────────────── */
-.chart-container {
-    position: relative;
-    height: 220px;
-    margin-top: 1rem;
-    padding: 0 8px;
-}
-
-@media (max-width: 600px) {
-    .chart-container {
-        height: 200px;
-        padding: 0 16px;
-    }
-}
-
-/* ─────────────────────────────────────────────────────────────── */
 /* Summary Items */
 /* ─────────────────────────────────────────────────────────────── */
 .summary-item {
@@ -501,7 +553,7 @@ keyframes fadeIn {
 
 .nav-item i {
     font-size: 24px;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .nav-item span {
@@ -514,7 +566,7 @@ keyframes fadeIn {
 }
 
 .nav-item.active i {
-    transform: scale(1.1);
+    transform: scale(1.15);
 }
 
 .nav-item:active {
@@ -558,7 +610,7 @@ keyframes fadeIn {
         font-size: 1.5rem;
     }
 
-       .chart-container {
+    .chart-container {
         height: 180px;
     }
 }
