@@ -37,11 +37,10 @@ try {
     $stats['total_habits'] = $stmt->fetchColumn() ?? 0;
     
     // Total notes
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM notes WHERE is_active = 1");
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM notes");
     $stmt->execute();
     $stats['total_notes'] = $stmt->fetchColumn() ?? 0;
     
-    // Total documents - NO is_active column!
     try {
         $stmt = $pdo->prepare("SELECT COUNT(*) FROM documents");
         $stmt->execute();
@@ -50,7 +49,6 @@ try {
         $stats['total_documents'] = 0;
     }
     
-    // Goals stats - NO is_active column!
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM goals WHERE is_completed = 1");
     $stmt->execute();
     $stats['goals_completed'] = $stmt->fetchColumn() ?? 0;
