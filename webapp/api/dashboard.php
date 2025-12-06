@@ -3,7 +3,7 @@ require_once '../config.php';
 
 // دریافت user_id
 $input = json_decode(file_get_contents('php://input'), true);
-$user_id = $input['user_id'] ?? null;
+$user_id = $input['user_id'] ?? $_GET['user_id'];
 
 if (!$user_id) {
     jsonResponse(false, null, 'کاربر یافت نشد');
