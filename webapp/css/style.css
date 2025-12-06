@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Modern Blue Theme - Enhanced Design with Charts
+   Modern Blue Theme - Enhanced Material Design
    ═══════════════════════════════════════════════════════════════ */
 
 :root {
@@ -29,6 +29,7 @@
     --shadow-sm: 0 2px 4px rgba(0,0,0,0.08);
     --shadow-md: 0 4px 8px rgba(0,0,0,0.12);
     --shadow-lg: 0 8px 16px rgba(0,0,0,0.16);
+    --shadow-xl: 0 12px 24px rgba(0,0,0,0.2);
     
     /* Spacing */
     --radius: 12px;
@@ -222,16 +223,18 @@ body {
 }
 
 /* ───────────────────────────────────────────────────────────────── */
-/* Stat Cards - Modern Design with More Colors */
+/* Stat Cards - Enhanced Material Design */
 /* ───────────────────────────────────────────────────────────────── */
 .stat-card {
-    padding: 1.5rem;
-    border-radius: var(--radius);
+    padding: 1.75rem 1.25rem;
+    border-radius: 16px;
     text-align: center;
     color: white;
     position: relative;
     overflow: hidden;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--shadow-lg);
+    border: none;
 }
 
 .stat-card::before {
@@ -243,7 +246,12 @@ body {
     height: 200%;
     background: rgba(255,255,255,0.1);
     transform: rotate(45deg);
-    transition: all 0.5s ease;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stat-card:active {
+    transform: translateY(2px);
+    box-shadow: var(--shadow-md);
 }
 
 .stat-card:active::before {
@@ -268,30 +276,38 @@ body {
 }
 
 .stat-icon-wrapper {
-    width: 50px;
-    height: 50px;
-    background: rgba(255,255,255,0.2);
+    width: 56px;
+    height: 56px;
+    background: rgba(255,255,255,0.25);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 auto 0.5rem;
+    margin: 0 auto 0.75rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover .stat-icon-wrapper {
+    transform: scale(1.1) rotate(5deg);
 }
 
 .stat-icon-wrapper i {
-    font-size: 28px;
+    font-size: 32px;
 }
 
 .stat-value {
-    font-size: 2rem;
+    font-size: 2.25rem;
     font-weight: 800;
-    margin: 0.5rem 0;
+    margin: 0.75rem 0;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 
 .stat-label {
-    font-size: 0.85rem;
-    opacity: 0.9;
+    font-size: 0.9rem;
+    opacity: 0.95;
     margin: 0;
+    font-weight: 500;
 }
 
 /* Mini Stats */
@@ -383,33 +399,6 @@ body {
     min-height: 40px;
 }
 
-/* Chart Loading State */
-.chart-loading {
-    position: relative;
-    overflow: hidden;
-}
-
-.chart-loading::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(255, 255, 255, 0.3),
-        transparent
-    );
-    animation: chart-shimmer 2s infinite;
-}
-
-@keyframes chart-shimmer {
-    0% { left: -100%; }
-    100% { left: 100%; }
-}
-
 @media (max-width: 600px) {
     .chart-container {
         height: 200px;
@@ -418,40 +407,46 @@ body {
     }
     
     .stat-value {
-        font-size: 1.6rem;
+        font-size: 1.8rem;
     }
     
     .stat-label {
-        font-size: 0.75rem;
+        font-size: 0.8rem;
     }
 }
 
 /* ───────────────────────────────────────────────────────────────── */
-/* Goals Cards - Material Design */
+/* Goals Cards - Enhanced Material Design */
 /* ───────────────────────────────────────────────────────────────── */
 .goal-card {
     background: var(--bg-card);
-    border-radius: var(--radius-sm);
-    padding: 1rem;
+    border-radius: 14px;
+    padding: 1.25rem;
     margin-bottom: 1rem;
     border: 1px solid var(--border-color);
-    transition: all 0.2s ease;
-    border-right: 4px solid var(--border-color);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border-right: 5px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+}
+
+.goal-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
 }
 
 .goal-card.completed {
     border-right-color: var(--success);
-    background: linear-gradient(90deg, rgba(76, 175, 80, 0.05) 0%, var(--bg-card) 50%);
+    background: linear-gradient(90deg, rgba(76, 175, 80, 0.06) 0%, var(--bg-card) 40%);
 }
 
 .goal-card.in-progress {
     border-right-color: var(--primary);
-    background: linear-gradient(90deg, rgba(25, 118, 210, 0.05) 0%, var(--bg-card) 50%);
+    background: linear-gradient(90deg, rgba(25, 118, 210, 0.06) 0%, var(--bg-card) 40%);
 }
 
 .goal-card.pending {
     border-right-color: var(--warning);
-    background: linear-gradient(90deg, rgba(255, 152, 0, 0.05) 0%, var(--bg-card) 50%);
+    background: linear-gradient(90deg, rgba(255, 152, 0, 0.06) 0%, var(--bg-card) 40%);
 }
 
 .goal-card:active {
@@ -462,48 +457,52 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: start;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.85rem;
 }
 
 .goal-title {
     font-weight: 600;
     color: var(--text-primary);
-    font-size: 1rem;
+    font-size: 1.05rem;
     margin: 0;
+    line-height: 1.4;
 }
 
 .goal-badge {
-    padding: 0.25rem 0.75rem;
-    border-radius: 12px;
-    font-size: 0.7rem;
-    font-weight: 600;
+    padding: 0.35rem 0.85rem;
+    border-radius: 14px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    white-space: nowrap;
 }
 
 .goal-progress-section {
-    margin: 0.75rem 0;
+    margin: 0.85rem 0;
 }
 
 .goal-progress-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 0.5rem;
-    font-size: 0.85rem;
+    margin-bottom: 0.6rem;
+    font-size: 0.875rem;
     color: var(--text-secondary);
+    font-weight: 500;
 }
 
 .goal-progress-bar {
-    height: 8px;
+    height: 10px;
     background: var(--border-color);
-    border-radius: 4px;
+    border-radius: 5px;
     overflow: hidden;
     position: relative;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
 }
 
 .goal-progress-fill {
     height: 100%;
-    border-radius: 4px;
-    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 5px;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%);
     position: relative;
     overflow: hidden;
@@ -519,7 +518,7 @@ body {
     background: linear-gradient(
         90deg,
         transparent,
-        rgba(255, 255, 255, 0.3),
+        rgba(255, 255, 255, 0.4),
         transparent
     );
     animation: progress-shimmer 2s infinite;
@@ -537,21 +536,21 @@ body {
 .goal-dates {
     display: flex;
     justify-content: space-between;
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     color: var(--text-secondary);
-    margin-top: 0.75rem;
-    padding-top: 0.75rem;
+    margin-top: 0.85rem;
+    padding-top: 0.85rem;
     border-top: 1px solid var(--border-color);
 }
 
 .goal-date-item {
     display: flex;
     align-items: center;
-    gap: 0.25rem;
+    gap: 0.35rem;
 }
 
 .goal-date-item i {
-    font-size: 14px;
+    font-size: 15px;
 }
 
 /* ───────────────────────────────────────────────────────────────── */
@@ -562,32 +561,14 @@ body {
 }
 
 /* ───────────────────────────────────────────────────────────────── */
-/* Summary Items */
-/* ───────────────────────────────────────────────────────────────── */
-.summary-item {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 0.75rem;
-    background: var(--bg-primary);
-    border-radius: var(--radius-sm);
-}
-
-.summary-item i {
-    font-size: 32px;
-}
-
-/* ───────────────────────────────────────────────────────────────── */
-/* Bottom Navigation - Enhanced for 5 Items */
+/* Bottom Navigation - Enlarged Icons */
 /* ───────────────────────────────────────────────────────────────── */
 
-/* Simple Bounce Animation */
 @keyframes navBounce {
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.15); }
 }
 
-/* Label Fade */
 @keyframes labelFade {
     from { 
         opacity: 0;
@@ -607,8 +588,8 @@ body {
     background: rgba(255, 255, 255, 0.98);
     display: flex;
     justify-content: space-around;
-    padding: 8px 4px calc(10px + env(safe-area-inset-bottom));
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+    padding: 10px 4px calc(12px + env(safe-area-inset-bottom));
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
     border-top: 1px solid var(--border-color);
     z-index: 1000;
     backdrop-filter: blur(12px);
@@ -621,20 +602,20 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 2px;
-    padding: 8px 10px;
+    gap: 3px;
+    padding: 10px 12px;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    border-radius: 16px;
+    border-radius: 18px;
     color: var(--text-secondary);
-    min-width: 60px;
+    min-width: 64px;
     overflow: visible;
     flex: 1;
 }
 
-/* Icon Container */
+/* Icon Container - ENLARGED */
 .nav-item i {
-    font-size: 26px;
+    font-size: 32px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     z-index: 1;
@@ -642,7 +623,7 @@ body {
 
 /* Label Styling */
 .nav-item span {
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     font-weight: 600;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     opacity: 0.7;
@@ -654,7 +635,7 @@ body {
 /* Active State */
 .nav-item.active {
     color: var(--primary);
-    background: rgba(25, 118, 210, 0.1);
+    background: rgba(25, 118, 210, 0.12);
 }
 
 .nav-item.active i {
@@ -670,7 +651,7 @@ body {
 /* Hover Effect (for desktop) */
 @media (hover: hover) {
     .nav-item:hover:not(.active) {
-        background: rgba(0, 0, 0, 0.05);
+        background: rgba(0, 0, 0, 0.06);
         transform: translateY(-2px);
     }
     
@@ -688,11 +669,11 @@ body {
 .nav-item.active::before {
     content: '';
     position: absolute;
-    bottom: 2px;
+    bottom: 3px;
     left: 50%;
     transform: translateX(-50%);
-    width: 4px;
-    height: 4px;
+    width: 5px;
+    height: 5px;
     background: var(--primary);
     border-radius: 50%;
     animation: dotPop 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -707,26 +688,6 @@ body {
         transform: translateX(-50%) scale(1);
         opacity: 1;
     }
-}
-
-/* Badge Support */
-.nav-item .badge {
-    position: absolute;
-    top: 4px;
-    right: 8px;
-    min-width: 16px;
-    height: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #F44336;
-    color: white;
-    border-radius: 8px;
-    font-size: 0.6rem;
-    font-weight: 700;
-    padding: 0 4px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-    animation: pulse 2s ease infinite;
 }
 
 /* Dark Mode Support */
@@ -773,21 +734,21 @@ body.dark-mode .nav-item.active {
 /* ───────────────────────────────────────────────────────────────── */
 @media (max-width: 600px) {
     .bottom-nav {
-        padding: 6px 2px calc(8px + env(safe-area-inset-bottom));
+        padding: 8px 2px calc(10px + env(safe-area-inset-bottom));
     }
     
     .nav-item {
-        padding: 6px 8px;
-        min-width: 56px;
-        gap: 1px;
+        padding: 8px 10px;
+        min-width: 60px;
+        gap: 2px;
     }
     
     .nav-item i {
-        font-size: 24px;
+        font-size: 28px;
     }
     
     .nav-item span {
-        font-size: 0.65rem;
+        font-size: 0.7rem;
     }
 }
 

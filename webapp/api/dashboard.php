@@ -1,6 +1,6 @@
 <?php
 // ════════════════════════════════════════════════════════════════
-// Dashboard API
+// Dashboard API - Enhanced with Goals & Documents
 // ════════════════════════════════════════════════════════════════
 
 require_once __DIR__ . '/../config.php';
@@ -15,27 +15,47 @@ if (!$user_id) {
 try {
     $stats = [];
     
+    // Monthly income
     $stmt = $pdo->prepare("SELECT SUM(monthly_amount) as total FROM incomes WHERE is_active = 1");
     $stmt->execute();
     $stats['monthly_income'] = $stmt->fetchColumn() ?? 0;
     
+    // Today's reminders
     $today = date('Y-m-d');
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM reminders WHERE is_active = 1 AND DATE(reminder_time) = ?");
     $stmt->execute([$today]);
     $stats['today_reminders'] = $stmt->fetchColumn() ?? 0;
     
+    // Completed habits today
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM habit_logs WHERE completed_date = ?");
     $stmt->execute([$today]);
     $stats['completed_habits'] = $stmt->fetchColumn() ?? 0;
     
+    // Total active habits
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM habits WHERE is_active = 1");
     $stmt->execute();
     $stats['total_habits'] = $stmt->fetchColumn() ?? 0;
     
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM notes");
+    // Total notes
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM notes WHERE is_active = 1");
     $stmt->execute();
     $stats['total_notes'] = $stmt->fetchColumn() ?? 0;
     
+    // Total documents (NEW)
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM documents WHERE is_active = 1");
+    $stmt->execute();
+    $stats['total_documents'] = $stmt->fetchColumn() ?? 0;
+    
+    // Goals stats (NEW)
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM goals WHERE is_active = 1 AND status = 'completed'");
+    $stmt->execute();
+    $stats['goals_completed'] = $stmt->fetchColumn() ?? 0;
+    
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM goals WHERE is_active = 1");
+    $stmt->execute();
+    $stats['goals_total'] = $stmt->fetchColumn() ?? 0;
+    
+    // Income chart (last 6 months)
     $income_chart = [];
     for ($i = 5; $i >= 0; $i--) {
         $month_date = date('Y-m-01', strtotime("-$i month"));
@@ -51,6 +71,7 @@ try {
         ];
     }
     
+    // Habits chart (last 7 days)
     $habits_chart = [];
     for ($i = 6; $i >= 0; $i--) {
         $date = date('Y-m-d', strtotime("-$i day"));
@@ -66,32 +87,10 @@ try {
         ];
     }
     
-    $recent_activities = [];
-    
-    $stmt = $pdo->prepare("
-        SELECT h.name, hl.completed_date 
-        FROM habit_logs hl 
-        JOIN habits h ON hl.habit_id = h.id 
-        ORDER BY hl.completed_date DESC, hl.id DESC 
-        LIMIT 5
-    ");
-    $stmt->execute();
-    $habit_logs = $stmt->fetchAll();
-    
-    foreach ($habit_logs as $log) {
-        $recent_activities[] = [
-            'icon' => 'check_circle',
-            'color' => 'green',
-            'title' => 'عادت ' . $log['name'] . ' انجام شد',
-            'time' => jdate('j F', strtotime($log['completed_date']))
-        ];
-    }
-    
     jsonResponse(true, [
         'stats' => $stats,
         'income_chart' => $income_chart,
-        'habits_chart' => $habits_chart,
-        'recent_activities' => array_slice($recent_activities, 0, 5)
+        'habits_chart' => $habits_chart
     ]);
     
 } catch (Exception $e) {
