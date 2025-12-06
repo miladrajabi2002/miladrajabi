@@ -1,0 +1,518 @@
+/* ═══════════════════════════════════════════════════════════════
+   UI/UX Enhancements - Supplementary Styles
+   این فایل بهبودهای UI/UX را بدون تغییر کدهای فعلی اضافه می‌کند
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─────────────────────────────────────────────────────────────── */
+/* 1. Animations & Micro-interactions */
+/* ─────────────────────────────────────────────────────────────── */
+
+/* Slide Up Animation */
+@keyframes slideUp {
+    from { 
+        transform: translateY(20px); 
+        opacity: 0; 
+    }
+    to { 
+        transform: translateY(0); 
+        opacity: 1; 
+    }
+}
+
+/* Fade In Animation */
+@keyframes fadeIn {
+    from { 
+        opacity: 0; 
+        transform: translateY(10px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+}
+
+/* Shimmer Animation for Skeleton */
+@keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Ripple Effect Animation */
+@keyframes ripple {
+    0% { 
+        transform: scale(0); 
+        opacity: 1; 
+    }
+    100% { 
+        transform: scale(2); 
+        opacity: 0; 
+    }
+}
+
+/* Apply slideUp to cards - بدون تغییر کد فعلی */
+.card.enhanced {
+    animation: slideUp 0.3s ease;
+}
+
+/* Ripple Effect for Buttons - فقط برای دکمه‌های با کلاس enhanced */
+.btn.enhanced {
+    position: relative;
+    overflow: hidden;
+}
+
+.btn.enhanced:active::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: rgba(255,255,255,0.3);
+    border-radius: 50%;
+    transform: scale(0);
+    animation: ripple 0.6s ease-out;
+    top: 50%;
+    left: 50%;
+    margin-left: -50%;
+    margin-top: -50%;
+}
+
+/* ─────────────────────────────────────────────────────────────── */
+/* 2. Skeleton Loading */
+/* ─────────────────────────────────────────────────────────────── */
+
+.skeleton-card {
+    padding: 16px;
+    background: var(--bg-card, #FFFFFF);
+    border-radius: var(--radius, 12px);
+    margin-bottom: 12px;
+    border: 1px solid var(--border-color, #E0E0E0);
+}
+
+.skeleton-line {
+    height: 16px;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 4px;
+    margin-bottom: 8px;
+}
+
+.skeleton-line.short {
+    width: 60%;
+}
+
+.skeleton-line.medium {
+    width: 80%;
+}
+
+.skeleton-avatar {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 50%;
+    margin-top: 8px;
+}
+
+.skeleton-circle {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 50%;
+}
+
+/* Dark Mode Skeletons */
+body.dark-mode .skeleton-line,
+body.dark-mode .skeleton-avatar,
+body.dark-mode .skeleton-circle {
+    background: linear-gradient(90deg, #2C2C2C 25%, #3C3C3C 50%, #2C2C2C 75%);
+    background-size: 200% 100%;
+}
+
+body.dark-mode .skeleton-card {
+    background: var(--bg-card, #2C2C2C);
+    border-color: var(--border-color, #3C3C3C);
+}
+
+/* ─────────────────────────────────────────────────────────────── */
+/* 3. Toast Notifications */
+/* ─────────────────────────────────────────────────────────────── */
+
+.toast {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #323232;
+    color: white;
+    padding: 14px 20px;
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    transition: transform 0.3s ease;
+    z-index: 10000;
+    max-width: 90%;
+    font-size: 0.9rem;
+}
+
+.toast.show {
+    transform: translateX(-50%) translateY(0);
+}
+
+.toast-success { 
+    background: #4CAF50; 
+}
+
+.toast-error { 
+    background: #F44336; 
+}
+
+.toast-warning { 
+    background: #FF9800; 
+}
+
+.toast-info { 
+    background: #2196F3; 
+}
+
+.toast i {
+    font-size: 20px;
+}
+
+/* ─────────────────────────────────────────────────────────────── */
+/* 4. Modern Stat Cards */
+/* ─────────────────────────────────────────────────────────────── */
+
+.stat-card-modern {
+    background: var(--bg-card, #FFFFFF);
+    border-radius: var(--radius, 12px);
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid var(--border-color, #E0E0E0);
+    box-shadow: var(--shadow-sm, 0 2px 4px rgba(0,0,0,0.08));
+    transition: all 0.3s ease;
+}
+
+.stat-card-modern:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md, 0 4px 8px rgba(0,0,0,0.12));
+}
+
+.stat-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-sm, 8px);
+    background: linear-gradient(135deg, var(--primary, #1976D2), var(--primary-dark, #0D47A1));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.stat-icon i {
+    font-size: 28px;
+    color: white;
+}
+
+.stat-icon.green {
+    background: linear-gradient(135deg, #4CAF50, #2E7D32);
+}
+
+.stat-icon.orange {
+    background: linear-gradient(135deg, #FF9800, #F57C00);
+}
+
+.stat-icon.purple {
+    background: linear-gradient(135deg, #9C27B0, #6A1B9A);
+}
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary, #757575);
+    margin: 0 0 4px 0;
+}
+
+.stat-value-modern {
+    font-size: 1.75rem;
+    font-weight: 800;
+    margin: 0;
+    color: var(--text-primary, #212121);
+}
+
+.stat-change {
+    font-size: 0.75rem;
+    margin: 4px 0 0 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.stat-change.positive {
+    color: var(--success, #4CAF50);
+}
+
+.stat-change.negative {
+    color: var(--danger, #F44336);
+}
+
+.stat-change i {
+    font-size: 14px;
+}
+
+/* ─────────────────────────────────────────────────────────────── */
+/* 5. Progress Indicators */
+/* ─────────────────────────────────────────────────────────────── */
+
+/* Circular Progress */
+.circular-progress {
+    position: relative;
+    width: 64px;
+    height: 64px;
+}
+
+.circular-progress.large {
+    width: 80px;
+    height: 80px;
+}
+
+.circular-progress.small {
+    width: 48px;
+    height: 48px;
+}
+
+.circular-progress svg {
+    transform: rotate(-90deg);
+}
+
+.circle-bg {
+    fill: none;
+    stroke: var(--border-color, #E0E0E0);
+    stroke-width: 3;
+}
+
+.circle {
+    fill: none;
+    stroke: var(--primary, #1976D2);
+    stroke-width: 3;
+    stroke-linecap: round;
+    transition: stroke-dasharray 0.3s ease;
+}
+
+.circle.success {
+    stroke: var(--success, #4CAF50);
+}
+
+.circle.warning {
+    stroke: var(--warning, #FF9800);
+}
+
+.circle.danger {
+    stroke: var(--danger, #F44336);
+}
+
+.percentage {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text-primary, #212121);
+}
+
+/* Linear Progress Bar - Modern */
+.progress-modern {
+    height: 8px;
+    background: var(--border-color, #E0E0E0);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+}
+
+.progress-bar-modern {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary, #1976D2), var(--primary-light, #42A5F5));
+    border-radius: 4px;
+    transition: width 0.3s ease;
+    position: relative;
+}
+
+.progress-bar-modern::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    animation: shimmer 2s infinite;
+}
+
+.progress-bar-modern.success {
+    background: linear-gradient(90deg, #4CAF50, #66BB6A);
+}
+
+.progress-bar-modern.warning {
+    background: linear-gradient(90deg, #FF9800, #FFA726);
+}
+
+.progress-bar-modern.danger {
+    background: linear-gradient(90deg, #F44336, #EF5350);
+}
+
+/* ─────────────────────────────────────────────────────────────── */
+/* 6. Loading States */
+/* ─────────────────────────────────────────────────────────────── */
+
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.loading-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ─────────────────────────────────────────────────────────────── */
+/* 7. Empty States */
+/* ─────────────────────────────────────────────────────────────── */
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    animation: fadeIn 0.5s ease;
+}
+
+.empty-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 20px;
+    background: #F5F7FA;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.empty-icon i {
+    font-size: 48px;
+    color: #9E9E9E;
+}
+
+body.dark-mode .empty-icon {
+    background: #2C2C2C;
+}
+
+.empty-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary, #212121);
+    margin-bottom: 8px;
+}
+
+.empty-description {
+    font-size: 0.9rem;
+    color: var(--text-secondary, #757575);
+    margin-bottom: 20px;
+}
+
+/* ─────────────────────────────────────────────────────────────── */
+/* 8. Utility Classes */
+/* ─────────────────────────────────────────────────────────────── */
+
+/* Animation utilities */
+.animate-slideUp {
+    animation: slideUp 0.3s ease;
+}
+
+.animate-fadeIn {
+    animation: fadeIn 0.3s ease;
+}
+
+/* Hover effects */
+.hover-lift {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+}
+
+/* Pulse animation for important elements */
+@keyframes pulse-glow {
+    0%, 100% { 
+        box-shadow: 0 0 0 0 rgba(25, 118, 210, 0.4); 
+    }
+    50% { 
+        box-shadow: 0 0 0 8px rgba(25, 118, 210, 0); 
+    }
+}
+
+.pulse-glow {
+    animation: pulse-glow 2s infinite;
+}
+
+/* ─────────────────────────────────────────────────────────────── */
+/* 9. Responsive Adjustments */
+/* ─────────────────────────────────────────────────────────────── */
+
+@media (max-width: 600px) {
+    .stat-card-modern {
+        padding: 1rem;
+    }
+    
+    .stat-value-modern {
+        font-size: 1.5rem;
+    }
+    
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+    }
+    
+    .stat-icon i {
+        font-size: 24px;
+    }
+    
+    .toast {
+        max-width: 85%;
+        font-size: 0.85rem;
+    }
+}
