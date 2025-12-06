@@ -28,11 +28,21 @@ try {
             // حذف log
             $stmt = $pdo->prepare("DELETE FROM habit_logs WHERE id = ?");
             $stmt->execute([$log['id']]);
+            
+            // کاهش شمارنده در جدول habits
+            $stmt = $pdo->prepare("UPDATE habits SET total_completed = total_completed - 1 WHERE id = ?");
+            $stmt->execute([$habit_id]);
+            
             jsonResponse(true, ['completed' => false], 'عادت لغو شد');
         } else {
             // اضافه کردن log
             $stmt = $pdo->prepare("INSERT INTO habit_logs (habit_id, completed_date) VALUES (?, ?)");
             $stmt->execute([$habit_id, $today]);
+            
+            // افزایش شمارنده در جدول habits
+            $stmt = $pdo->prepare("UPDATE habits SET total_completed = total_completed + 1 WHERE id = ?");
+            $stmt->execute([$habit_id]);
+            
             jsonResponse(true, ['completed' => true], 'عادت ثبت شد');
         }
     } else {
@@ -43,10 +53,9 @@ try {
             SELECT 
                 h.id,
                 h.name,
-                h.icon,
-                h.target_days,
+                h.total_completed,
                 h.is_active,
-                (SELECT COUNT(*) FROM habit_logs WHERE habit_id = h.id) as total_completed,
+                h.created_at,
                 (SELECT COUNT(*) FROM habit_logs WHERE habit_id = h.id AND completed_date = ?) as is_completed_today
             FROM habits h
             WHERE h.is_active = 1
@@ -55,10 +64,35 @@ try {
         $stmt->execute([$today]);
         $habits = $stmt->fetchAll();
         
-        // محاسبه درصد پیشرفت
+        // محاسبه آمار برای هر عادت
         foreach ($habits as &$habit) {
             $habit['is_completed_today'] = $habit['is_completed_today'] > 0;
-            $habit['progress'] = $habit['target_days'] > 0 ? round(($habit['total_completed'] / $habit['target_days']) * 100) : 0;
+            
+            // محاسبه تعداد روزهای از زمان ایجاد
+            $created_date = new DateTime($habit['created_at']);
+            $current_date = new DateTime();
+            $days_since_creation = $created_date->diff($current_date)->days + 1;
+            
+            // نرخ موفقیت = (تعداد انجام شده / کل روزها) * 100
+            $habit['total_days'] = $days_since_creation;
+            $habit['success_rate'] = $days_since_creation > 0 
+                ? round(($habit['total_completed'] / $days_since_creation) * 100, 1) 
+                : 0;
+            
+            // وضعیت فعلی
+            if ($habit['success_rate'] >= 80) {
+                $habit['status'] = 'عالی';
+                $habit['status_color'] = 'green';
+            } elseif ($habit['success_rate'] >= 50) {
+                $habit['status'] = 'خوب';
+                $habit['status_color'] = 'blue';
+            } elseif ($habit['success_rate'] >= 30) {
+                $habit['status'] = 'متوسط';
+                $habit['status_color'] = 'orange';
+            } else {
+                $habit['status'] = 'نیاز به تلاش';
+                $habit['status_color'] = 'red';
+            }
         }
         
         jsonResponse(true, ['habits' => $habits]);
