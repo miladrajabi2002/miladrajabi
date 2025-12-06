@@ -2,8 +2,8 @@
 require_once '../config.php';
 
 $input = json_decode(file_get_contents('php://input'), true);
-$user_id = $input['user_id'] ?? null;
-$action = $input['action'] ?? 'list';
+$user_id = $input['user_id'] ?? $_GET['user_id'] ?? $_POST['user_id'] ?? null;
+$action = $input['action'] ?? $_GET['action'] ?? $_POST['action'] ?? 'list';
 
 if (!$user_id) {
     jsonResponse(false, null, 'کاربر یافت نشد');
@@ -12,7 +12,7 @@ if (!$user_id) {
 try {
     if ($action === 'toggle') {
         // تغییر وضعیت عادت
-        $habit_id = $input['habit_id'] ?? null;
+        $habit_id = $input['habit_id'] ?? $_GET['habit_id'] ?? $_POST['habit_id'] ?? null;
         $today = date('Y-m-d');
         
         if (!$habit_id) {

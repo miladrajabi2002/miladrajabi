@@ -1,9 +1,9 @@
 <?php
 require_once '../config.php';
 
-// دریافت user_id
+// دریافت user_id از POST یا GET
 $input = json_decode(file_get_contents('php://input'), true);
-$user_id = $input['user_id'] ?? $_GET['user_id'];
+$user_id = $input['user_id'] ?? $_GET['user_id'] ?? $_POST['user_id'] ?? null;
 
 if (!$user_id) {
     jsonResponse(false, null, 'کاربر یافت نشد');
