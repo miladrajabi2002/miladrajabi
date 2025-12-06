@@ -1,7 +1,10 @@
 <?php
-require_once '../config.php';
+// ════════════════════════════════════════════════════════════════
+// Dashboard API
+// ════════════════════════════════════════════════════════════════
 
-// دریافت user_id از POST یا GET
+require_once __DIR__ . '/../config.php';
+
 $input = json_decode(file_get_contents('php://input'), true);
 $user_id = $input['user_id'] ?? $_GET['user_id'] ?? $_POST['user_id'] ?? null;
 
@@ -10,36 +13,29 @@ if (!$user_id) {
 }
 
 try {
-    // آمار کلی
     $stats = [];
     
-    // درآمد ماه جاری
     $stmt = $pdo->prepare("SELECT SUM(monthly_amount) as total FROM incomes WHERE is_active = 1");
     $stmt->execute();
     $stats['monthly_income'] = $stmt->fetchColumn() ?? 0;
     
-    // یادآورهای امروز
     $today = date('Y-m-d');
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM reminders WHERE is_active = 1 AND DATE(reminder_time) = ?");
     $stmt->execute([$today]);
     $stats['today_reminders'] = $stmt->fetchColumn() ?? 0;
     
-    // عادت‌های تکمیل شده امروز
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM habit_logs WHERE completed_date = ?");
     $stmt->execute([$today]);
     $stats['completed_habits'] = $stmt->fetchColumn() ?? 0;
     
-    // کل عادت‌های فعال
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM habits WHERE is_active = 1");
     $stmt->execute();
     $stats['total_habits'] = $stmt->fetchColumn() ?? 0;
     
-    // یادداشت‌ها
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM notes");
     $stmt->execute();
     $stats['total_notes'] = $stmt->fetchColumn() ?? 0;
     
-    // نمودار درآمد 6 ماه اخیر
     $income_chart = [];
     for ($i = 5; $i >= 0; $i--) {
         $month_date = date('Y-m-01', strtotime("-$i month"));
@@ -55,7 +51,6 @@ try {
         ];
     }
     
-    // نمودار عادت‌ها 7 روز اخیر
     $habits_chart = [];
     for ($i = 6; $i >= 0; $i--) {
         $date = date('Y-m-d', strtotime("-$i day"));
@@ -71,10 +66,8 @@ try {
         ];
     }
     
-    // فعالیت‌های اخیر
     $recent_activities = [];
     
-    // آخرین عادت انجام شده
     $stmt = $pdo->prepare("
         SELECT h.name, hl.completed_date 
         FROM habit_logs hl 
@@ -102,5 +95,6 @@ try {
     ]);
     
 } catch (Exception $e) {
-    jsonResponse(false, null, 'خطا در دریافت اطلاعات: ' . $e->getMessage());
+    error_log('Dashboard Error: ' . $e->getMessage());
+    jsonResponse(false, null, 'خطا در دریافت اطلاعات');
 }

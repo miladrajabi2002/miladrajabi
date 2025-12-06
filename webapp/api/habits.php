@@ -1,103 +1,83 @@
 <?php
-require_once '../config.php';
+// ════════════════════════════════════════════════════════════════
+// Habits API
+// ════════════════════════════════════════════════════════════════
+
+require_once __DIR__ . '/../config.php';
 
 $input = json_decode(file_get_contents('php://input'), true);
-$user_id = $input['user_id'] ?? $_GET['user_id'] ?? $_POST['user_id'] ?? null;
-$action = $input['action'] ?? $_GET['action'] ?? $_POST['action'] ?? 'list';
-
-if (!$user_id) {
-    jsonResponse(false, null, 'کاربر یافت نشد');
-}
+$action = $input['action'] ?? $_GET['action'] ?? 'list';
 
 try {
-    if ($action === 'toggle') {
-        // تغییر وضعیت عادت
-        $habit_id = $input['habit_id'] ?? $_GET['habit_id'] ?? $_POST['habit_id'] ?? null;
-        $today = date('Y-m-d');
-        
-        if (!$habit_id) {
-            jsonResponse(false, null, 'شناسه عادت الزامی است');
-        }
-        
-        // چک کردن وجود log
-        $stmt = $pdo->prepare("SELECT id FROM habit_logs WHERE habit_id = ? AND completed_date = ?");
-        $stmt->execute([$habit_id, $today]);
-        $log = $stmt->fetch();
-        
-        if ($log) {
-            // حذف log
-            $stmt = $pdo->prepare("DELETE FROM habit_logs WHERE id = ?");
-            $stmt->execute([$log['id']]);
-            
-            // کاهش شمارنده در جدول habits
-            $stmt = $pdo->prepare("UPDATE habits SET total_completed = total_completed - 1 WHERE id = ?");
-            $stmt->execute([$habit_id]);
-            
-            jsonResponse(true, ['completed' => false], 'عادت لغو شد');
-        } else {
-            // اضافه کردن log
-            $stmt = $pdo->prepare("INSERT INTO habit_logs (habit_id, completed_date) VALUES (?, ?)");
-            $stmt->execute([$habit_id, $today]);
-            
-            // افزایش شمارنده در جدول habits
-            $stmt = $pdo->prepare("UPDATE habits SET total_completed = total_completed + 1 WHERE id = ?");
-            $stmt->execute([$habit_id]);
-            
-            jsonResponse(true, ['completed' => true], 'عادت ثبت شد');
-        }
-    } else {
-        // دریافت لیست عادت‌ها
-        $today = date('Y-m-d');
-        
+    if ($action === 'list') {
         $stmt = $pdo->prepare("
             SELECT 
                 h.id,
                 h.name,
-                h.total_completed,
                 h.is_active,
-                h.created_at,
-                (SELECT COUNT(*) FROM habit_logs WHERE habit_id = h.id AND completed_date = ?) as is_completed_today
+                COUNT(DISTINCT hl.completed_date) as total_completed,
+                DATEDIFF(CURDATE(), h.created_at) + 1 as total_days,
+                CASE 
+                    WHEN EXISTS(SELECT 1 FROM habit_logs WHERE habit_id = h.id AND completed_date = CURDATE())
+                    THEN 1 ELSE 0 
+                END as is_completed_today
             FROM habits h
+            LEFT JOIN habit_logs hl ON h.id = hl.habit_id
             WHERE h.is_active = 1
+            GROUP BY h.id
             ORDER BY h.created_at DESC
         ");
-        $stmt->execute([$today]);
+        $stmt->execute();
         $habits = $stmt->fetchAll();
         
-        // محاسبه آمار برای هر عادت
         foreach ($habits as &$habit) {
-            $habit['is_completed_today'] = $habit['is_completed_today'] > 0;
-            
-            // محاسبه تعداد روزهای از زمان ایجاد
-            $created_date = new DateTime($habit['created_at']);
-            $current_date = new DateTime();
-            $days_since_creation = $created_date->diff($current_date)->days + 1;
-            
-            // نرخ موفقیت = (تعداد انجام شده / کل روزها) * 100
-            $habit['total_days'] = $days_since_creation;
-            $habit['success_rate'] = $days_since_creation > 0 
-                ? round(($habit['total_completed'] / $days_since_creation) * 100, 1) 
+            $success_rate = $habit['total_days'] > 0 
+                ? round(($habit['total_completed'] / $habit['total_days']) * 100) 
                 : 0;
             
-            // وضعیت فعلی
-            if ($habit['success_rate'] >= 80) {
+            $habit['success_rate'] = $success_rate;
+            
+            if ($success_rate >= 70) {
                 $habit['status'] = 'عالی';
                 $habit['status_color'] = 'green';
-            } elseif ($habit['success_rate'] >= 50) {
+            } elseif ($success_rate >= 40) {
                 $habit['status'] = 'خوب';
-                $habit['status_color'] = 'blue';
-            } elseif ($habit['success_rate'] >= 30) {
-                $habit['status'] = 'متوسط';
                 $habit['status_color'] = 'orange';
             } else {
-                $habit['status'] = 'نیاز به تلاش';
-                $habit['status_color'] = 'red';
+                $habit['status'] = 'نیاز به بهبود';
+                $habit['status_color'] = 'grey';
             }
         }
         
         jsonResponse(true, ['habits' => $habits]);
+        
+    } elseif ($action === 'toggle') {
+        $habit_id = $input['habit_id'] ?? null;
+        
+        if (!$habit_id || !is_numeric($habit_id)) {
+            jsonResponse(false, null, 'شناسه عادت نامعتبر است');
+        }
+        
+        $today = date('Y-m-d');
+        
+        $stmt = $pdo->prepare("SELECT id FROM habit_logs WHERE habit_id = ? AND completed_date = ?");
+        $stmt->execute([$habit_id, $today]);
+        $existing = $stmt->fetch();
+        
+        if ($existing) {
+            $stmt = $pdo->prepare("DELETE FROM habit_logs WHERE habit_id = ? AND completed_date = ?");
+            $stmt->execute([$habit_id, $today]);
+            $message = 'عادت لغو شد';
+        } else {
+            $stmt = $pdo->prepare("INSERT INTO habit_logs (habit_id, completed_date) VALUES (?, ?)");
+            $stmt->execute([$habit_id, $today]);
+            $message = 'عادت ثبت شد 🎉';
+        }
+        
+        jsonResponse(true, ['toggled' => !$existing], $message);
     }
     
 } catch (Exception $e) {
-    jsonResponse(false, null, 'خطا: ' . $e->getMessage());
+    error_log('Habits Error: ' . $e->getMessage());
+    jsonResponse(false, null, 'خطا در پردازش');
 }

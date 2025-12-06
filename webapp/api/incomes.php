@@ -1,5 +1,9 @@
 <?php
-require_once '../config.php';
+// ════════════════════════════════════════════════════════════════
+// Incomes API
+// ════════════════════════════════════════════════════════════════
+
+require_once __DIR__ . '/../config.php';
 
 $input = json_decode(file_get_contents('php://input'), true);
 $user_id = $input['user_id'] ?? $_GET['user_id'] ?? $_POST['user_id'] ?? null;
@@ -9,7 +13,6 @@ if (!$user_id) {
 }
 
 try {
-    // دریافت لیست درآمدها
     $stmt = $pdo->prepare("
         SELECT 
             id,
@@ -29,7 +32,6 @@ try {
     $stmt->execute();
     $incomes = $stmt->fetchAll();
     
-    // محاسبه آمار
     $total_active = 0;
     $total_inactive = 0;
     $monthly_total = 0;
@@ -50,10 +52,8 @@ try {
             $total_inactive++;
         }
         
-        // فرمت تاریخ فارسی
         $income['start_date_fa'] = jdate('j F Y', strtotime($income['start_date']));
         
-        // روزهای باقی‌مانده تا پرداخت
         if ($income['payment_day'] && $income['is_active']) {
             $today = (int)date('d');
             $payment_day = (int)$income['payment_day'];
@@ -67,7 +67,6 @@ try {
         }
     }
     
-    // محاسبه میانگین درآمد
     $average_per_client = $total_active > 0 ? $monthly_total / $total_active : 0;
     
     jsonResponse(true, [
@@ -84,5 +83,6 @@ try {
     ]);
     
 } catch (Exception $e) {
-    jsonResponse(false, null, 'خطا: ' . $e->getMessage());
+    error_log('Incomes Error: ' . $e->getMessage());
+    jsonResponse(false, null, 'خطا در بارگذاری لیست');
 }
