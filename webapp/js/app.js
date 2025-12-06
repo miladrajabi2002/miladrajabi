@@ -40,7 +40,7 @@ const cache = {
 };
 
 // ────────────────────────────────────────────────────────────────
-// Chart Skeleton Loaders
+// Enhanced Chart Skeleton Loaders
 // ────────────────────────────────────────────────────────────────
 function showChartSkeleton(chartId) {
     const canvas = document.getElementById(chartId);
@@ -55,38 +55,14 @@ function showChartSkeleton(chartId) {
     
     const skeleton = document.createElement('div');
     skeleton.className = 'chart-skeleton';
-    skeleton.innerHTML = `
-        <div style="height: 100%; display: flex; align-items: flex-end; gap: 8px; padding: 20px;">
-            ${Array(6).fill(0).map((_, i) => `
-                <div style="flex: 1; background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); 
-                            background-size: 200% 100%; animation: shimmer 1.5s infinite; 
-                            height: ${Math.random() * 60 + 40}%; border-radius: 4px 4px 0 0;"></div>
-            `).join('')}
-        </div>
-    `;
     
-    // Add shimmer animation if not exists
-    if (!document.getElementById('shimmer-style')) {
-        const style = document.createElement('style');
-        style.id = 'shimmer-style';
-        style.textContent = `
-            @keyframes shimmer {
-                0% { background-position: -200% 0; }
-                100% { background-position: 200% 0; }
-            }
-            .chart-skeleton { 
-                position: absolute; 
-                top: 0; 
-                left: 0; 
-                right: 0; 
-                bottom: 0; 
-                z-index: 10;
-                background: white;
-                border-radius: 8px;
-            }
-        `;
-        document.head.appendChild(style);
-    }
+    // Create random height bars
+    const bars = Array.from({ length: 6 }, () => {
+        const height = Math.random() * 60 + 40;
+        return `<div style="height: ${height}%;"></div>`;
+    }).join('');
+    
+    skeleton.innerHTML = bars;
     
     container.style.position = 'relative';
     container.appendChild(skeleton);
@@ -308,11 +284,12 @@ function showPage(pageName) {
     
     const titles = {
         dashboard: 'داشبورد',
+        habits: 'عادت‌ها',
         incomes: 'درآمدها',
         'income-detail': 'جزئیات درآمد',
         reminders: 'یادآورها',
+        goals: 'هدف‌ها',
         notes: 'یادداشت‌ها',
-        habits: 'عادت‌ها',
         settings: 'تنظیمات'
     };
     
@@ -337,10 +314,11 @@ function showPage(pageName) {
 function loadPageData(pageName) {
     switch(pageName) {
         case 'dashboard': loadDashboard(); break;
+        case 'habits': loadHabits(); break;
         case 'incomes': loadIncomes(); break;
         case 'reminders': loadReminders(); break;
+        case 'goals': loadGoals(); break;
         case 'notes': loadNotes(); break;
-        case 'habits': loadHabits(); break;
     }
 }
 
@@ -358,13 +336,23 @@ async function loadDashboard() {
     if (result.success && result.data) {
         const { stats, income_chart, habits_chart } = result.data;
         
+        // Update stats
         const incomeEl = document.getElementById('stat-income');
         const remindersEl = document.getElementById('stat-reminders');
         const notesEl = document.getElementById('stat-notes');
+        const documentsEl = document.getElementById('stat-documents');
+        const goalsEl = document.getElementById('stat-goals');
         
         if (incomeEl) incomeEl.textContent = formatMoney(stats.monthly_income);
         if (remindersEl) remindersEl.textContent = stats.today_reminders || 0;
         if (notesEl) notesEl.textContent = stats.total_notes || 0;
+        if (documentsEl) documentsEl.textContent = stats.total_documents || 0;
+        
+        if (goalsEl) {
+            const goalsCompleted = stats.goals_completed || 0;
+            const goalsTotal = stats.goals_total || 0;
+            goalsEl.textContent = goalsTotal > 0 ? `${goalsCompleted}/${goalsTotal}` : '0/0';
+        }
         
         const habitsBadge = document.getElementById('habits-badge');
         if (habitsEl) {
@@ -380,7 +368,7 @@ async function loadDashboard() {
         
         await loadTodayHabits();
         
-        // حل مشکل بار اول: اضافه کردن تاخیر برای Chart.js بعد از بارگذاری صفحه
+        // Optimized chart rendering with reduced delay
         setTimeout(() => {
             if (income_chart && income_chart.length > 0) {
                 renderIncomeChart(income_chart);
@@ -389,7 +377,7 @@ async function loadDashboard() {
             if (habits_chart && habits_chart.length > 0) {
                 renderHabitsChart(habits_chart);
             }
-        }, 300);
+        }, 150); // Reduced from 300ms to 150ms
         
         console.log('✅ Dashboard OK');
     } else {
@@ -415,13 +403,11 @@ async function loadTodayHabits() {
             return;
         }
         
-        // Material Design - ساده و زیبا
         container.innerHTML = habits.map(habit => `
             <div style="display: flex; align-items: center; padding: 14px; margin-bottom: 8px;
                         background: #F5F7FA; border-radius: 12px; transition: all 0.2s ease;
                         border-right: 4px solid ${habit.is_completed_today ? '#4CAF50' : '#E0E0E0'};">
                 
-                <!-- Checkbox -->
                 <div style="margin-left: 12px;">
                     <label style="margin: 0; cursor: pointer; display: flex; align-items: center;">
                         <input type="checkbox" class="filled-in" ${habit.is_completed_today ? 'checked' : ''} 
@@ -430,7 +416,6 @@ async function loadTodayHabits() {
                     </label>
                 </div>
                 
-                <!-- Content -->
                 <div style="flex: 1; min-width: 0;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                         <span style="font-size: 0.95rem; font-weight: 500; color: #212121;">${habit.name}</span>
@@ -453,7 +438,7 @@ async function loadTodayHabits() {
 }
 
 // ────────────────────────────────────────────────────────────────
-// Enhanced Income Chart with Skeleton & Animations
+// Enhanced Income Chart with Better Performance
 // ────────────────────────────────────────────────────────────────
 function renderIncomeChart(data) {
     const ctx = document.getElementById('incomeChart');
@@ -474,18 +459,18 @@ function renderIncomeChart(data) {
                         const num = typeof d.amount === 'string' ? parseFloat(d.amount) : d.amount;
                         return Math.ceil(num / 1000000);
                     }),
-                    borderColor: '#6366f1',
-                    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                    borderColor: '#1976D2',
+                    backgroundColor: 'rgba(25, 118, 210, 0.12)',
                     tension: 0.4,
                     fill: true,
                     borderWidth: 3,
-                    pointRadius: 4,
-                    pointHoverRadius: 6,
-                    pointBackgroundColor: '#6366f1',
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: '#1976D2',
                     pointBorderColor: '#fff',
                     pointBorderWidth: 2,
                     pointHoverBackgroundColor: '#fff',
-                    pointHoverBorderColor: '#6366f1',
+                    pointHoverBorderColor: '#1976D2',
                     pointHoverBorderWidth: 3
                 }]
             },
@@ -493,7 +478,7 @@ function renderIncomeChart(data) {
                 responsive: true,
                 maintainAspectRatio: false,
                 animation: {
-                    duration: 1500,
+                    duration: 1200,
                     easing: 'easeInOutQuart',
                     onComplete: () => hideChartSkeleton('incomeChart')
                 },
@@ -501,18 +486,18 @@ function renderIncomeChart(data) {
                     padding: {
                         left: 10,
                         right: 10,
-                        top: 10,
+                        top: 15,
                         bottom: 10
                     }
                 },
                 plugins: { 
                     legend: { display: false },
                     tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        padding: 12,
-                        cornerRadius: 8,
-                        titleFont: { size: 14, weight: 'bold' },
-                        bodyFont: { size: 13 },
+                        backgroundColor: 'rgba(0, 0, 0, 0.85)',
+                        padding: 14,
+                        cornerRadius: 10,
+                        titleFont: { size: 14, weight: 'bold', family: 'Vazirmatn' },
+                        bodyFont: { size: 13, family: 'Vazirmatn' },
                         displayColors: false,
                         callbacks: {
                             label: (context) => `${context.parsed.y} میلیون تومان`
@@ -524,17 +509,17 @@ function renderIncomeChart(data) {
                         beginAtZero: true,
                         ticks: { 
                             callback: v => v + ' م',
-                            font: { size: 11 },
+                            font: { size: 11, family: 'Vazirmatn' },
                             color: '#757575'
                         },
                         grid: {
-                            color: 'rgba(0, 0, 0, 0.05)',
+                            color: 'rgba(0, 0, 0, 0.06)',
                             drawBorder: false
                         }
                     },
                     x: {
                         ticks: {
-                            font: { size: 11 },
+                            font: { size: 11, family: 'Vazirmatn' },
                             color: '#757575'
                         },
                         grid: {
@@ -548,11 +533,11 @@ function renderIncomeChart(data) {
                 }
             }
         });
-    }, 200);
+    }, 100); // Reduced from 200ms to 100ms
 }
 
 // ────────────────────────────────────────────────────────────────
-// Enhanced Habits Chart with Gradient & Animations
+// Enhanced Habits Chart with Better Gradient
 // ────────────────────────────────────────────────────────────────
 function renderHabitsChart(data) {
     const ctx = document.getElementById('habitsChart');
@@ -571,40 +556,40 @@ function renderHabitsChart(data) {
                     label: 'عادت',
                     data: data.map(d => d.count),
                     backgroundColor: data.map((d, i) => {
-                        const alpha = 0.6 + (i / data.length) * 0.4;
-                        return `rgba(16, 185, 129, ${alpha})`;
+                        const alpha = 0.65 + (i / data.length) * 0.35;
+                        return `rgba(76, 175, 80, ${alpha})`;
                     }),
                     borderRadius: 8,
                     borderWidth: 0,
-                    hoverBackgroundColor: '#059669',
+                    hoverBackgroundColor: '#43A047',
                     barThickness: 'flex',
-                    maxBarThickness: 40
+                    maxBarThickness: 45
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 animation: {
-                    duration: 1200,
-                    easing: 'easeOutBounce',
+                    duration: 1000,
+                    easing: 'easeOutCubic',
                     onComplete: () => hideChartSkeleton('habitsChart')
                 },
                 layout: {
                     padding: {
                         left: 10,
                         right: 10,
-                        top: 10,
+                        top: 15,
                         bottom: 10
                     }
                 },
                 plugins: { 
                     legend: { display: false },
                     tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        padding: 12,
-                        cornerRadius: 8,
-                        titleFont: { size: 14, weight: 'bold' },
-                        bodyFont: { size: 13 },
+                        backgroundColor: 'rgba(0, 0, 0, 0.85)',
+                        padding: 14,
+                        cornerRadius: 10,
+                        titleFont: { size: 14, weight: 'bold', family: 'Vazirmatn' },
+                        bodyFont: { size: 13, family: 'Vazirmatn' },
                         displayColors: false,
                         callbacks: {
                             label: (context) => `${context.parsed.y} عادت انجام شده`
@@ -616,17 +601,17 @@ function renderHabitsChart(data) {
                         beginAtZero: true, 
                         ticks: { 
                             stepSize: 1,
-                            font: { size: 11 },
+                            font: { size: 11, family: 'Vazirmatn' },
                             color: '#757575'
                         },
                         grid: {
-                            color: 'rgba(0, 0, 0, 0.05)',
+                            color: 'rgba(0, 0, 0, 0.06)',
                             drawBorder: false
                         }
                     },
                     x: {
                         ticks: {
-                            font: { size: 11 },
+                            font: { size: 11, family: 'Vazirmatn' },
                             color: '#757575'
                         },
                         grid: {
@@ -636,7 +621,91 @@ function renderHabitsChart(data) {
                 }
             }
         });
-    }, 200);
+    }, 100); // Reduced from 200ms to 100ms
+}
+
+// ────────────────────────────────────────────────────────────────
+// Habits Page
+// ────────────────────────────────────────────────────────────────
+async function loadHabits() {
+    const result = await apiCall('habits.php', { action: 'list' });
+    
+    if (result.success && result.data) {
+        const { habits } = result.data;
+        
+        const completed = habits.filter(h => h.is_completed_today).length;
+        const total = habits.length;
+        const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
+        
+        const rateEl = document.getElementById('habits-success-rate');
+        const completedEl = document.getElementById('habits-completed-today');
+        const totalEl = document.getElementById('habits-total-today');
+        
+        if (rateEl) rateEl.textContent = rate + '%';
+        if (completedEl) completedEl.textContent = completed;
+        if (totalEl) totalEl.textContent = total;
+        
+        const container = document.getElementById('habits-list');
+        if (!container) return;
+        
+        if (habits.length === 0) {
+            container.innerHTML = '<p class="center grey-text">عادتی ثبت نشده</p>';
+            return;
+        }
+        
+        container.innerHTML = habits.map(habit => `
+            <div class="card hoverable" style="margin-bottom: 12px; border-right: 4px solid ${habit.status_color === 'green' ? '#4CAF50' : habit.status_color === 'orange' ? '#FF9800' : '#9E9E9E'};">
+                <div class="card-content" style="padding: 16px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        
+                        <label style="margin: 0; cursor: pointer;">
+                            <input type="checkbox" class="filled-in" ${habit.is_completed_today ? 'checked' : ''} 
+                                   onchange="toggleHabit(${habit.id})" />
+                            <span></span>
+                        </label>
+                        
+                        <div style="flex: 1;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <h6 style="margin: 0; font-size: 1rem; font-weight: 600;">${habit.name}</h6>
+                                <span style="padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;
+                                             ${habit.status_color === 'green' ? 'background: #E8F5E9; color: #2E7D32;' : 
+                                               habit.status_color === 'orange' ? 'background: #FFF3E0; color: #F57C00;' : 
+                                               'background: #F5F5F5; color: #757575;'}">
+                                    ${habit.success_rate}%
+                                </span>
+                            </div>
+                            
+                            <div class="progress" style="height: 6px; background: #E0E0E0; border-radius: 3px; margin: 0 0 8px 0;">
+                                <div class="determinate" 
+                                     style="width: ${habit.success_rate}%; background: ${habit.status_color === 'green' ? '#4CAF50' : habit.status_color === 'orange' ? '#FF9800' : '#9E9E9E'}; border-radius: 3px;"></div>
+                            </div>
+                            
+                            <p style="margin: 0; font-size: 0.85rem; color: #757575;">
+                                <span style="color: ${habit.status_color === 'green' ? '#4CAF50' : habit.status_color === 'orange' ? '#FF9800' : '#9E9E9E'}; font-weight: 600;">${habit.status}</span>
+                                 | ${habit.total_completed} از ${habit.total_days} روز
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+        
+        console.log('✅ Habits loaded:', habits.length);
+    }
+}
+
+async function toggleHabit(habitId) {
+    if (hapticEnabled && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+    
+    const result = await apiCall('habits.php', { action: 'toggle', habit_id: habitId });
+    
+    if (result.success) {
+        if (typeof M !== 'undefined') {
+            M.toast({ html: result.message || 'ذخیره شد', classes: 'green rounded' });
+        }
+        loadHabits();
+        loadDashboard();
+    }
 }
 
 // ────────────────────────────────────────────────────────────────
@@ -833,10 +902,9 @@ async function showIncomeDetail(incomeId) {
             </button>
         `;
         
-        // حل مشکل بار اول
         setTimeout(() => {
             renderIncomeDetailChart(monthly_chart);
-        }, 300);
+        }, 150);
         
         console.log('✅ Income detail loaded successfully');
     } else {
@@ -897,7 +965,7 @@ function renderIncomeDetailChart(data) {
                 responsive: true,
                 maintainAspectRatio: false,
                 animation: {
-                    duration: 1500,
+                    duration: 1200,
                     easing: 'easeInOutQuart',
                     onComplete: () => hideChartSkeleton('incomeDetailChart')
                 },
@@ -905,7 +973,7 @@ function renderIncomeDetailChart(data) {
                     padding: {
                         left: 10,
                         right: 10,
-                        top: 10,
+                        top: 15,
                         bottom: 10
                     }
                 },
@@ -913,10 +981,10 @@ function renderIncomeDetailChart(data) {
                     legend: { display: false },
                     tooltip: {
                         backgroundColor: 'rgba(33, 150, 243, 0.9)',
-                        padding: 12,
-                        cornerRadius: 8,
-                        titleFont: { size: 14, weight: 'bold' },
-                        bodyFont: { size: 13 },
+                        padding: 14,
+                        cornerRadius: 10,
+                        titleFont: { size: 14, weight: 'bold', family: 'Vazirmatn' },
+                        bodyFont: { size: 13, family: 'Vazirmatn' },
                         displayColors: false,
                         callbacks: {
                             label: (context) => `${context.parsed.y} میلیون تومان`
@@ -928,7 +996,7 @@ function renderIncomeDetailChart(data) {
                         beginAtZero: true,
                         ticks: { 
                             callback: v => v + ' م',
-                            font: { size: 11 },
+                            font: { size: 11, family: 'Vazirmatn' },
                             color: '#757575'
                         },
                         grid: {
@@ -938,7 +1006,7 @@ function renderIncomeDetailChart(data) {
                     },
                     x: {
                         ticks: {
-                            font: { size: 11 },
+                            font: { size: 11, family: 'Vazirmatn' },
                             color: '#757575'
                         },
                         grid: {
@@ -952,100 +1020,113 @@ function renderIncomeDetailChart(data) {
                 }
             }
         });
-    }, 200);
+    }, 100);
 }
 
 // ────────────────────────────────────────────────────────────────
-// Habits - Material Design
+// Goals Page - NEW
 // ────────────────────────────────────────────────────────────────
-async function loadHabits() {
-    const result = await apiCall('habits.php', { action: 'list' });
+async function loadGoals() {
+    const result = await apiCall('goals.php');
     
     if (result.success && result.data) {
-        const { habits } = result.data;
+        const { goals, stats } = result.data;
         
-        const completed = habits.filter(h => h.is_completed_today).length;
-        const total = habits.length;
-        const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
+        // Update stats
+        const overallProgressEl = document.getElementById('goals-overall-progress');
+        const completedEl = document.getElementById('goals-completed');
+        const totalEl = document.getElementById('goals-total');
+        const completedCountEl = document.getElementById('goals-completed-count');
+        const activeCountEl = document.getElementById('goals-active-count');
+        const pendingCountEl = document.getElementById('goals-pending-count');
         
-        const rateEl = document.getElementById('habits-success-rate');
-        const completedEl = document.getElementById('habits-completed-today');
-        const totalEl = document.getElementById('habits-total-today');
+        if (overallProgressEl) overallProgressEl.textContent = (stats.overall_progress || 0) + '%';
+        if (completedEl) completedEl.textContent = stats.completed || 0;
+        if (totalEl) totalEl.textContent = stats.total || 0;
+        if (completedCountEl) completedCountEl.textContent = stats.completed || 0;
+        if (activeCountEl) activeCountEl.textContent = stats.active || 0;
+        if (pendingCountEl) pendingCountEl.textContent = stats.pending || 0;
         
-        if (rateEl) rateEl.textContent = rate + '%';
-        if (completedEl) completedEl.textContent = completed;
-        if (totalEl) totalEl.textContent = total;
-        
-        const container = document.getElementById('habits-list');
+        const container = document.getElementById('goals-list');
         if (!container) return;
         
-        if (habits.length === 0) {
-            container.innerHTML = '<p class="center grey-text">عادتی ثبت نشده</p>';
+        if (goals.length === 0) {
+            container.innerHTML = '<p class="center grey-text">هدفی ثبت نشده</p>';
             return;
         }
         
-        // Material Design Cards
-        container.innerHTML = habits.map(habit => `
-            <div class="card hoverable" style="margin-bottom: 12px; border-right: 4px solid ${habit.status_color === 'green' ? '#4CAF50' : habit.status_color === 'orange' ? '#FF9800' : '#9E9E9E'};">
-                <div class="card-content" style="padding: 16px;">
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        
-                        <!-- Checkbox -->
-                        <label style="margin: 0; cursor: pointer;">
-                            <input type="checkbox" class="filled-in" ${habit.is_completed_today ? 'checked' : ''} 
-                                   onchange="toggleHabit(${habit.id})" />
-                            <span></span>
-                        </label>
-                        
-                        <!-- Content -->
-                        <div style="flex: 1;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                <h6 style="margin: 0; font-size: 1rem; font-weight: 600;">${habit.name}</h6>
-                                <span style="padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;
-                                             ${habit.status_color === 'green' ? 'background: #E8F5E9; color: #2E7D32;' : 
-                                               habit.status_color === 'orange' ? 'background: #FFF3E0; color: #F57C00;' : 
-                                               'background: #F5F5F5; color: #757575;'}">
-                                    ${habit.success_rate}%
-                                </span>
-                            </div>
-                            
-                            <!-- Progress Bar -->
-                            <div class="progress" style="height: 6px; background: #E0E0E0; border-radius: 3px; margin: 0 0 8px 0;">
-                                <div class="determinate" 
-                                     style="width: ${habit.success_rate}%; background: ${habit.status_color === 'green' ? '#4CAF50' : habit.status_color === 'orange' ? '#FF9800' : '#9E9E9E'}; border-radius: 3px;"></div>
-                            </div>
-                            
-                            <!-- Stats -->
-                            <p style="margin: 0; font-size: 0.85rem; color: #757575;">
-                                <span style="color: ${habit.status_color === 'green' ? '#4CAF50' : habit.status_color === 'orange' ? '#FF9800' : '#9E9E9E'}; font-weight: 600;">${habit.status}</span>
-                                 | ${habit.total_completed} از ${habit.total_days} روز
-                            </p>
+        // Render goals with Material Design
+        container.innerHTML = goals.map(goal => {
+            const statusClass = goal.status === 'completed' ? 'completed' : 
+                              goal.status === 'in-progress' ? 'in-progress' : 'pending';
+            const statusColor = goal.status === 'completed' ? '#4CAF50' : 
+                              goal.status === 'in-progress' ? '#1976D2' : '#FF9800';
+            const statusText = goal.status === 'completed' ? 'تکمیل شده' : 
+                             goal.status === 'in-progress' ? 'در حال اجرا' : 'در انتظار';
+            
+            return `
+                <div class="goal-card ${statusClass}">
+                    <div class="goal-header">
+                        <h6 class="goal-title">${goal.title}</h6>
+                        <span class="goal-badge" style="background: ${statusColor}20; color: ${statusColor};">
+                            ${statusText}
+                        </span>
+                    </div>
+                    
+                    ${goal.description ? `
+                        <p style="margin: 0 0 12px 0; font-size: 0.9rem; color: #757575; line-height: 1.5;">
+                            ${goal.description}
+                        </p>
+                    ` : ''}
+                    
+                    <div class="goal-progress-section">
+                        <div class="goal-progress-header">
+                            <span>پیشرفت</span>
+                            <span style="font-weight: 700; color: ${statusColor};">${goal.progress}%</span>
+                        </div>
+                        <div class="goal-progress-bar">
+                            <div class="goal-progress-fill ${goal.status === 'completed' ? 'completed' : ''}" 
+                                 style="width: ${goal.progress}%;"></div>
                         </div>
                     </div>
+                    
+                    <div class="goal-dates">
+                        <div class="goal-date-item">
+                            <i class="material-icons">event</i>
+                            <span>شروع: ${goal.start_date_fa}</span>
+                        </div>
+                        ${goal.end_date_fa ? `
+                            <div class="goal-date-item">
+                                <i class="material-icons">event_available</i>
+                                <span>پایان: ${goal.end_date_fa}</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    ${goal.days_remaining ? `
+                        <div style="margin-top: 12px; padding: 8px; background: ${statusColor}10; 
+                                    border-radius: 6px; text-align: center;">
+                            <span style="font-size: 0.85rem; color: ${statusColor}; font-weight: 600;">
+                                <i class="material-icons tiny" style="vertical-align: middle;">schedule</i>
+                                ${goal.days_remaining} روز مانده
+                            </span>
+                        </div>
+                    ` : ''}
                 </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
         
-        console.log('✅ Habits loaded:', habits.length);
-    }
-}
-
-async function toggleHabit(habitId) {
-    if (hapticEnabled && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
-    
-    const result = await apiCall('habits.php', { action: 'toggle', habit_id: habitId });
-    
-    if (result.success) {
-        if (typeof M !== 'undefined') {
-            M.toast({ html: result.message || 'ذخیره شد', classes: 'green rounded' });
+        console.log('✅ Goals loaded:', goals.length);
+    } else {
+        const container = document.getElementById('goals-list');
+        if (container) {
+            container.innerHTML = '<p class="center red-text">خطا در بارگذاری هدف‌ها</p>';
         }
-        loadHabits();
-        loadDashboard();
     }
 }
 
 // ────────────────────────────────────────────────────────────────
-// Reminders - Material Design
+// Reminders
 // ────────────────────────────────────────────────────────────────
 async function loadReminders() {
     const result = await apiCall('reminders.php');
@@ -1081,7 +1162,7 @@ async function loadReminders() {
 }
 
 // ────────────────────────────────────────────────────────────────
-// Notes - Material Design
+// Notes
 // ────────────────────────────────────────────────────────────────
 async function loadNotes() {
     const result = await apiCall('notes.php');
@@ -1151,7 +1232,6 @@ window.addEventListener('load', function() {
                 setTimeout(() => {
                     splash.style.display = 'none';
                     if (app) app.style.display = 'block';
-                    // بارگذاری داشبورد بعد از نمایش صفحه
                     loadDashboard();
                 }, 500);
             } else if (app) {
