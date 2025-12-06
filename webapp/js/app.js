@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════════════
-// Enhanced Telegram WebApp
+// Modern Blue Theme WebApp - Enhanced Edition
 // ═══════════════════════════════════════════════════════════════
 
 const tg = window.Telegram.WebApp;
-const API_URL = '../webapp/api/';
+const API_URL = './api/';
 
 let userId = null;
 let hapticEnabled = true;
@@ -17,26 +17,25 @@ function initTelegramWebApp() {
     tg.ready();
     tg.expand();
     
-    // Dark mode
     if (tg.colorScheme === 'dark') {
         document.body.classList.add('dark-mode');
         const toggle = document.getElementById('dark-mode-toggle');
         if (toggle) toggle.checked = true;
     }
     
-    // User data
     const user = tg.initDataUnsafe?.user;
     if (user) {
         userId = user.id;
         const userName = user.first_name || 'کاربر';
+        const avatarUrl = user.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=1976D2&color=fff&size=128`;
         
-        document.getElementById('user-name').textContent = userName;
         document.getElementById('welcome-user').textContent = userName;
-        
-        const avatarUrl = user.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=6366f1&color=fff&size=128`;
-        document.getElementById('user-avatar').src = avatarUrl;
+        document.getElementById('user-avatar-main').src = avatarUrl;
+        document.getElementById('user-avatar-settings').src = avatarUrl;
+        document.getElementById('user-name-settings').textContent = userName;
+        document.getElementById('user-id-settings').textContent = `ID: ${userId}`;
     } else {
-        userId = 123456; // For testing
+        userId = 123456;
     }
     
     updateDateTime();
@@ -46,22 +45,14 @@ function initTelegramWebApp() {
 function updateDateTime() {
     const now = new Date();
     const days = ['یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنج‌شنبه', 'جمعه', 'شنبه'];
-    const dayName = days[now.getDay()];
     const time = now.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
     
     const el = document.getElementById('current-date-time');
-    if (el) {
-        el.textContent = `${dayName}، ${time}`;
-    }
-}
-
-function initMaterialize() {
-    M.Sidenav.init(document.querySelectorAll('.sidenav'));
-    M.FloatingActionButton.init(document.querySelectorAll('.fixed-action-btn'));
+    if (el) el.textContent = `${days[now.getDay()]}، ${time}`;
 }
 
 // ───────────────────────────────────────────────────────────────
-// API Calls
+// API
 // ───────────────────────────────────────────────────────────────
 async function apiCall(endpoint, data = {}) {
     try {
@@ -72,9 +63,9 @@ async function apiCall(endpoint, data = {}) {
         });
         return await response.json();
     } catch (error) {
-        console.error('API Error:', error);
-        M.toast({ html: 'خطا در ارتباط با سرور', classes: 'red rounded' });
-        return { success: false };
+        console.error('❌ API Error:', error);
+        M.toast({ html: 'خطا در ارتباط', classes: 'red rounded' });
+        return { success: false, demo: true };
     }
 }
 
@@ -86,7 +77,8 @@ function showPage(pageName) {
     document.getElementById(pageName + '-page').classList.add('active');
     
     document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-    event.currentTarget.classList.add('active');
+    const activeNav = document.querySelector(`[data-page="${pageName}"]`);
+    if (activeNav) activeNav.classList.add('active');
     
     const titles = {
         dashboard: 'داشبورد',
@@ -98,10 +90,7 @@ function showPage(pageName) {
     };
     document.getElementById('page-title').textContent = titles[pageName];
     
-    M.Sidenav.getInstance(document.querySelector('.sidenav'))?.close();
-    
     loadPageData(pageName);
-    
     if (hapticEnabled) tg.HapticFeedback.impactOccurred('light');
 }
 
@@ -121,54 +110,120 @@ function loadPageData(pageName) {
 async function loadDashboard() {
     const result = await apiCall('dashboard.php');
     
-    if (result.success) {
-        const { stats, income_chart, habits_chart, recent_activities } = result.data;
+    if (result.success && result.data) {
+        const { stats, income_chart, habits_chart } = result.data;
         
-        // Update stats
+        // Stats
         document.getElementById('stat-income').textContent = formatMoney(stats.monthly_income);
-        document.getElementById('stat-reminders').textContent = stats.today_reminders;
-        document.getElementById('stat-habits').textContent = `${stats.completed_habits}/${stats.total_habits}`;
-        document.getElementById('stat-notes').textContent = stats.total_notes;
+        
+        // Habits success rate
+        const rate = stats.total_habits > 0 ? Math.round((stats.completed_habits / stats.total_habits) * 100) : 0;
+        document.getElementById('stat-habits-rate').textContent = `${toPersianNum(rate)}%`;
+        
+        // Summary
+        document.getElementById('summary-reminders').textContent = toPersianNum(stats.today_reminders);
+        document.getElementById('summary-notes').textContent = toPersianNum(stats.total_notes);
+        document.getElementById('habits-badge').textContent = `${toPersianNum(stats.completed_habits)}/${toPersianNum(stats.total_habits)}`;
+        
+        // Habits today
+        await loadHabitsToday();
         
         // Charts
         renderIncomeChart(income_chart);
         renderHabitsChart(habits_chart);
-        
-        // Recent activities
-        renderActivities(recent_activities);
+    } else {
+        loadDemoData();
     }
 }
 
+async function loadHabitsToday() {
+    const result = await apiCall('habits.php', { action: 'list' });
+    
+    if (result.success && result.data) {
+        const { habits } = result.data;
+        const container = document.getElementById('habits-today-list');
+        
+        if (habits.length === 0) {
+            container.innerHTML = '<div class="center grey-text">عادتی ثبت نشده</div>';
+            return;
+        }
+        
+        container.innerHTML = habits.map(habit => `
+            <div class="habit-item" onclick="toggleHabitQuick(${habit.id}, ${!habit.is_completed_today})">
+                <div class="habit-checkbox ${habit.is_completed_today ? 'checked' : ''}">
+                    ${habit.is_completed_today ? '<i class="material-icons">check</i>' : ''}
+                </div>
+                <div class="habit-info">
+                    <div class="habit-name">${habit.name}</div>
+                    <div class="habit-progress-bar">
+                        <div class="habit-progress-fill" style="width: ${habit.progress}%"></div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+}
+
+function loadDemoData() {
+    document.getElementById('stat-income').textContent = '10.5M';
+    document.getElementById('stat-habits-rate').textContent = '۶۲%';
+    document.getElementById('summary-reminders').textContent = '۵';
+    document.getElementById('summary-notes').textContent = '۱۲';
+    
+    renderIncomeChart([
+        { month: 'مرداد', amount: 8000000 },
+        { month: 'شهریور', amount: 9000000 },
+        { month: 'مهر', amount: 8500000 },
+        { month: 'آبان', amount: 10000000 },
+        { month: 'آذر', amount: 10500000 },
+        { month: 'دی', amount: 10500000 }
+    ]);
+    
+    renderHabitsChart([
+        { day: 'ش', count: 5 },
+        { day: 'ی', count: 6 },
+        { day: 'د', count: 4 },
+        { day: 'س', count: 7 },
+        { day: 'چ', count: 5 },
+        { day: 'پ', count: 6 },
+        { day: 'ج', count: 3 }
+    ]);
+}
+
 function renderIncomeChart(data) {
-    const ctx = document.getElementById('incomeChart').getContext('2d');
+    const ctx = document.getElementById('incomeChart');
+    if (!ctx) return;
     
     if (incomeChart) incomeChart.destroy();
     
-    incomeChart = new Chart(ctx, {
+    incomeChart = new Chart(ctx.getContext('2d'), {
         type: 'line',
         data: {
             labels: data.map(d => d.month),
             datasets: [{
-                label: 'درآمد (تومان)',
+                label: 'درآمد',
                 data: data.map(d => d.amount / 1000000),
-                borderColor: '#6366f1',
-                backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                borderColor: '#1976D2',
+                backgroundColor: 'rgba(25, 118, 210, 0.1)',
                 tension: 0.4,
-                fill: true
+                fill: true,
+                borderWidth: 3,
+                pointRadius: 4,
+                pointHoverRadius: 6
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false }
-            },
+            plugins: { legend: { display: false } },
             scales: {
                 y: {
                     beginAtZero: true,
-                    ticks: {
-                        callback: value => value + 'M'
-                    }
+                    ticks: { callback: v => v + 'M' },
+                    grid: { color: 'rgba(0,0,0,0.05)' }
+                },
+                x: {
+                    grid: { display: false }
                 }
             }
         }
@@ -176,51 +231,39 @@ function renderIncomeChart(data) {
 }
 
 function renderHabitsChart(data) {
-    const ctx = document.getElementById('habitsChart').getContext('2d');
+    const ctx = document.getElementById('habitsChart');
+    if (!ctx) return;
     
     if (habitsChart) habitsChart.destroy();
     
-    habitsChart = new Chart(ctx, {
+    habitsChart = new Chart(ctx.getContext('2d'), {
         type: 'bar',
         data: {
             labels: data.map(d => d.day),
             datasets: [{
-                label: 'عادت انجام شده',
+                label: 'عادت',
                 data: data.map(d => d.count),
-                backgroundColor: '#10b981'
+                backgroundColor: '#4CAF50',
+                borderRadius: 6,
+                barThickness: 30
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false }
-            },
+            plugins: { legend: { display: false } },
             scales: {
                 y: {
                     beginAtZero: true,
-                    ticks: { stepSize: 1 }
+                    ticks: { stepSize: 1 },
+                    grid: { color: 'rgba(0,0,0,0.05)' }
+                },
+                x: {
+                    grid: { display: false }
                 }
             }
         }
     });
-}
-
-function renderActivities(activities) {
-    const container = document.getElementById('recent-activities');
-    
-    if (!activities || activities.length === 0) {
-        container.innerHTML = '<li class="collection-item center grey-text">فعالیتی ثبت نشده</li>';
-        return;
-    }
-    
-    container.innerHTML = activities.map(act => `
-        <li class="collection-item avatar">
-            <i class="material-icons circle ${act.color}">${act.icon}</i>
-            <span class="title">${act.title}</span>
-            <p class="grey-text">${act.time}</p>
-        </li>
-    `).join('');
 }
 
 // ───────────────────────────────────────────────────────────────
@@ -229,12 +272,13 @@ function renderActivities(activities) {
 async function loadIncomes() {
     const result = await apiCall('incomes.php');
     
-    if (result.success) {
+    if (result.success && result.data) {
         const { incomes, stats } = result.data;
         
-        document.getElementById('income-total').textContent = stats.total_active;
-        document.getElementById('income-monthly').textContent = formatMoney(stats.monthly_total);
-        document.getElementById('income-inactive').textContent = stats.total_inactive;
+        document.getElementById('income-total-amount').textContent = formatMoney(stats.monthly_total);
+        document.getElementById('income-sources-count').textContent = `از ${toPersianNum(stats.total_active + stats.total_inactive)} منبع`;
+        document.getElementById('income-active').textContent = toPersianNum(stats.total_active);
+        document.getElementById('income-inactive').textContent = toPersianNum(stats.total_inactive);
         
         const container = document.getElementById('incomes-list');
         
@@ -243,20 +287,21 @@ async function loadIncomes() {
             return;
         }
         
-        container.innerHTML = '<ul class="collection">' + incomes.map(inc => `
-            <li class="collection-item">
-                <div>
-                    <span class="title">${inc.client_name}</span>
-                    ${inc.client_username ? `<a href="https://t.me/${inc.client_username.replace('@', '')}" target="_blank" class="grey-text">@${inc.client_username.replace('@', '')}</a>` : ''}
-                    <p class="grey-text">${inc.service_type}</p>
-                    <p class="grey-text">مبلغ: ${formatMoney(inc.monthly_amount)} | ${inc.months} ماه | کل: ${formatMoney(inc.total_earned)}</p>
-                    ${inc.payment_day ? `<p class="grey-text">روز پرداخت: ${inc.payment_day} هر ماه</p>` : ''}
+        container.innerHTML = incomes.map(inc => `
+            <div class="income-card">
+                <div class="income-header">
+                    <div class="income-name">${inc.client_name}</div>
+                    <span class="income-badge ${inc.is_active ? 'active' : 'inactive'}">
+                        ${inc.is_active ? 'فعال' : 'غیرفعال'}
+                    </span>
                 </div>
-                <span class="secondary-content">
-                    <span class="badge ${inc.is_active ? 'green' : 'grey'} white-text">${inc.is_active ? 'فعال' : 'غیرفعال'}</span>
-                </span>
-            </li>
-        `).join('') + '</ul>';
+                <p class="grey-text">${inc.service_type}</p>
+                <div class="income-details">
+                    <span><strong>${formatMoney(inc.monthly_amount)}</strong> / ماه</span>
+                    <span>${toPersianNum(inc.months)} ماه = ${formatMoney(inc.total_earned)}</span>
+                </div>
+            </div>
+        `).join('');
     }
 }
 
@@ -266,8 +311,14 @@ async function loadIncomes() {
 async function loadHabits() {
     const result = await apiCall('habits.php', { action: 'list' });
     
-    if (result.success) {
+    if (result.success && result.data) {
         const { habits } = result.data;
+        const completed = habits.filter(h => h.is_completed_today).length;
+        const rate = habits.length > 0 ? Math.round((completed / habits.length) * 100) : 0;
+        
+        document.getElementById('habits-success-rate').textContent = `${toPersianNum(rate)}%`;
+        document.getElementById('habits-completed-today').textContent = `${toPersianNum(completed)} از ${toPersianNum(habits.length)} عادت`;
+        
         const container = document.getElementById('habits-list');
         
         if (habits.length === 0) {
@@ -275,33 +326,31 @@ async function loadHabits() {
             return;
         }
         
-        container.innerHTML = '<ul class="collection">' + habits.map(habit => `
-            <li class="collection-item">
-                <div>
-                    <label>
-                        <input type="checkbox" class="filled-in" ${habit.is_completed_today ? 'checked' : ''} 
-                               onchange="toggleHabit(${habit.id}, this.checked)">
-                        <span>${habit.name}</span>
-                    </label>
-                    <div class="progress" style="margin-top: 8px;">
-                        <div class="determinate" style="width: ${habit.progress}%"></div>
-                    </div>
-                    <p class="grey-text">پیشرفت: ${habit.total_completed}/${habit.target_days} روز (${habit.progress}%)</p>
+        container.innerHTML = habits.map(habit => `
+            <div class="habit-item" onclick="toggleHabitQuick(${habit.id}, ${!habit.is_completed_today})">
+                <div class="habit-checkbox ${habit.is_completed_today ? 'checked' : ''}">
+                    ${habit.is_completed_today ? '<i class="material-icons">check</i>' : ''}
                 </div>
-            </li>
-        `).join('') + '</ul>';
+                <div class="habit-info">
+                    <div class="habit-name">${habit.name}</div>
+                    <div class="habit-progress">پیشرفت: ${toPersianNum(habit.total_completed)}/${toPersianNum(habit.target_days)} (۶${toPersianNum(habit.progress)}%)</div>
+                    <div class="habit-progress-bar">
+                        <div class="habit-progress-fill" style="width: ${habit.progress}%"></div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
     }
 }
 
-async function toggleHabit(habitId, checked) {
+async function toggleHabitQuick(habitId, newState) {
     if (hapticEnabled) tg.HapticFeedback.impactOccurred('medium');
     
     const result = await apiCall('habits.php', { action: 'toggle', habit_id: habitId });
     
     if (result.success) {
-        M.toast({ html: result.message, classes: 'green rounded' });
-        loadHabits();
         loadDashboard();
+        loadHabits();
     }
 }
 
@@ -311,12 +360,12 @@ async function toggleHabit(habitId, checked) {
 async function loadReminders() {
     const result = await apiCall('reminders.php');
     
-    if (result.success) {
+    if (result.success && result.data) {
         const { reminders } = result.data;
         const container = document.getElementById('reminders-list');
         
         if (reminders.length === 0) {
-            container.innerHTML = '<p class="center grey-text">یادآوری برای امروز ندارید</p>';
+            container.innerHTML = '<p class="center grey-text">یادآوری ندارید</p>';
             return;
         }
         
@@ -337,7 +386,7 @@ async function loadReminders() {
 async function loadNotes() {
     const result = await apiCall('notes.php');
     
-    if (result.success) {
+    if (result.success && result.data) {
         const { notes } = result.data;
         const container = document.getElementById('notes-list');
         
@@ -350,7 +399,7 @@ async function loadNotes() {
             <div class="card hoverable">
                 <div class="card-content">
                     <p>${note.preview}</p>
-                    <p class="grey-text" style="font-size: 0.8rem; margin-top: 8px;">${note.created_at_fa}</p>
+                    <p class="grey-text small" style="margin-top: 8px;">${note.created_at_fa}</p>
                 </div>
             </div>
         `).join('');
@@ -361,14 +410,18 @@ async function loadNotes() {
 // Utilities
 // ───────────────────────────────────────────────────────────────
 function formatMoney(amount) {
-    if (amount >= 1000000) {
-        return (amount / 1000000).toFixed(1) + 'M';
-    }
+    if (!amount) return '0';
+    if (amount >= 1000000) return toPersianNum((amount / 1000000).toFixed(1)) + 'M';
     return new Intl.NumberFormat('fa-IR').format(amount);
 }
 
+function toPersianNum(num) {
+    const persian = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+    return String(num).replace(/\d/g, d => persian[d]);
+}
+
 // ───────────────────────────────────────────────────────────────
-// Dark Mode
+// Settings
 // ───────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
     const darkToggle = document.getElementById('dark-mode-toggle');
@@ -378,24 +431,22 @@ document.addEventListener('DOMContentLoaded', function() {
         darkToggle.addEventListener('change', function() {
             document.body.classList.toggle('dark-mode');
             if (hapticEnabled) tg.HapticFeedback.impactOccurred('medium');
-            M.toast({ html: this.checked ? 'حالت تاریک فعال شد' : 'حالت روشن فعال شد', classes: 'rounded' });
+            M.toast({ html: this.checked ? 'حالت تاریک فعال شد' : 'حالت روشن فعال شد', classes: 'blue rounded' });
         });
     }
     
     if (hapticToggle) {
         hapticToggle.addEventListener('change', function() {
             hapticEnabled = this.checked;
-            M.toast({ html: this.checked ? 'لرزش لمسی فعال شد' : 'لرزش لمسی غیرفعال شد', classes: 'rounded' });
         });
     }
 });
 
 // ───────────────────────────────────────────────────────────────
-// App Initialization
+// Init
 // ───────────────────────────────────────────────────────────────
 window.addEventListener('load', function() {
     initTelegramWebApp();
-    initMaterialize();
     loadDashboard();
     
     setTimeout(() => {
@@ -404,9 +455,7 @@ window.addEventListener('load', function() {
             document.getElementById('splash-screen').style.display = 'none';
             document.getElementById('app').style.display = 'block';
         }, 500);
-    }, 2000);
+    }, 1500);
 });
 
-// Export functions
 window.showPage = showPage;
-window.toggleHabit = toggleHabit;
