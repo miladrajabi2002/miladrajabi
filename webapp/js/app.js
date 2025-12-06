@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════════
-// Telegram WebApp - Material Design
+// Telegram WebApp - Material Design Complete
 // ════════════════════════════════════════════════════════════════
 
 const tg = window.Telegram?.WebApp || {};
@@ -288,7 +288,7 @@ async function loadDashboard() {
 }
 
 // ────────────────────────────────────────────────────────────────
-// Today Habits List
+// Today Habits - Material Design
 // ────────────────────────────────────────────────────────────────
 async function loadTodayHabits() {
     const container = document.getElementById('habits-today-list');
@@ -304,18 +304,33 @@ async function loadTodayHabits() {
             return;
         }
         
+        // Material Design - ساده و زیبا
         container.innerHTML = habits.map(habit => `
-            <div class="habit-item" style="display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
-                <label style="flex: 1; margin: 0; cursor: pointer;">
-                    <input type="checkbox" class="filled-in" ${habit.is_completed_today ? 'checked' : ''} 
-                           onchange="toggleHabit(${habit.id})" />
-                    <span style="font-size: 0.95rem;">${habit.name}</span>
-                </label>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <div class="progress" style="width: 60px; height: 6px; margin: 0;">
-                        <div class="determinate ${habit.status_color}" style="width: ${habit.success_rate}%"></div>
+            <div style="display: flex; align-items: center; padding: 14px; margin-bottom: 8px;
+                        background: #F5F7FA; border-radius: 12px; transition: all 0.2s ease;
+                        border-right: 4px solid ${habit.is_completed_today ? '#4CAF50' : '#E0E0E0'};">
+                
+                <!-- Checkbox -->
+                <div style="margin-left: 12px;">
+                    <label style="margin: 0; cursor: pointer; display: flex; align-items: center;">
+                        <input type="checkbox" class="filled-in" ${habit.is_completed_today ? 'checked' : ''} 
+                               onchange="toggleHabit(${habit.id})" />
+                        <span></span>
+                    </label>
+                </div>
+                
+                <!-- Content -->
+                <div style="flex: 1; min-width: 0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <span style="font-size: 0.95rem; font-weight: 500; color: #212121;">${habit.name}</span>
+                        <span style="font-size: 0.85rem; font-weight: 600; color: ${habit.status_color === 'green' ? '#4CAF50' : habit.status_color === 'orange' ? '#FF9800' : '#9E9E9E'};">
+                            ${habit.success_rate}%
+                        </span>
                     </div>
-                    <span class="${habit.status_color}-text" style="font-size: 0.85rem; font-weight: 500; min-width: 35px; text-align: left;">${habit.success_rate}%</span>
+                    <div class="progress" style="height: 4px; background: #E0E0E0; border-radius: 2px; margin: 0;">
+                        <div class="determinate" 
+                             style="width: ${habit.success_rate}%; background: ${habit.status_color === 'green' ? '#4CAF50' : habit.status_color === 'orange' ? '#FF9800' : '#9E9E9E'}; border-radius: 2px;"></div>
+                    </div>
                 </div>
             </div>
         `).join('');
@@ -392,7 +407,7 @@ function renderHabitsChart(data) {
 }
 
 // ────────────────────────────────────────────────────────────────
-// Incomes - Simple Material Design
+// Incomes
 // ────────────────────────────────────────────────────────────────
 async function loadIncomes() {
     const result = await apiCall('incomes.php');
@@ -418,14 +433,12 @@ async function loadIncomes() {
             return;
         }
         
-        // لیست ساده Material Design
         container.innerHTML = incomes.map(inc => `
             <div class="card hoverable" 
                  style="margin-bottom: 12px; cursor: pointer; transition: all 0.2s ease;" 
                  onclick="showIncomeDetail(${inc.id})">
                 <div class="card-content" style="padding: 16px;">
                     
-                    <!-- Header -->
                     <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
                         <div>
                             <h6 style="margin: 0; font-size: 1.1rem; font-weight: 600;">${inc.client_name}</h6>
@@ -440,7 +453,6 @@ async function loadIncomes() {
                         </span>
                     </div>
                     
-                    <!-- Info -->
                     <div style="display: flex; justify-content: space-between; padding: 12px; 
                                 background: #F5F7FA; border-radius: 8px;">
                         <div style="text-align: center; flex: 1;">
@@ -645,7 +657,7 @@ function renderIncomeDetailChart(data) {
 }
 
 // ────────────────────────────────────────────────────────────────
-// Habits
+// Habits - Material Design
 // ────────────────────────────────────────────────────────────────
 async function loadHabits() {
     const result = await apiCall('habits.php', { action: 'list' });
@@ -673,24 +685,47 @@ async function loadHabits() {
             return;
         }
         
-        container.innerHTML = '<ul class="collection">' + habits.map(habit => `
-            <li class="collection-item">
-                <div>
-                    <label>
-                        <input type="checkbox" class="filled-in" ${habit.is_completed_today ? 'checked' : ''} 
-                               onchange="toggleHabit(${habit.id})">
-                        <span><strong>${habit.name}</strong></span>
-                    </label>
-                    <div class="progress" style="margin-top: 8px;">
-                        <div class="determinate ${habit.status_color}" style="width: ${habit.success_rate}%"></div>
+        // Material Design Cards
+        container.innerHTML = habits.map(habit => `
+            <div class="card hoverable" style="margin-bottom: 12px; border-right: 4px solid ${habit.status_color === 'green' ? '#4CAF50' : habit.status_color === 'orange' ? '#FF9800' : '#9E9E9E'};">
+                <div class="card-content" style="padding: 16px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        
+                        <!-- Checkbox -->
+                        <label style="margin: 0; cursor: pointer;">
+                            <input type="checkbox" class="filled-in" ${habit.is_completed_today ? 'checked' : ''} 
+                                   onchange="toggleHabit(${habit.id})" />
+                            <span></span>
+                        </label>
+                        
+                        <!-- Content -->
+                        <div style="flex: 1;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <h6 style="margin: 0; font-size: 1rem; font-weight: 600;">${habit.name}</h6>
+                                <span style="padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;
+                                             ${habit.status_color === 'green' ? 'background: #E8F5E9; color: #2E7D32;' : 
+                                               habit.status_color === 'orange' ? 'background: #FFF3E0; color: #F57C00;' : 
+                                               'background: #F5F5F5; color: #757575;'}">
+                                    ${habit.success_rate}%
+                                </span>
+                            </div>
+                            
+                            <!-- Progress Bar -->
+                            <div class="progress" style="height: 6px; background: #E0E0E0; border-radius: 3px; margin: 0 0 8px 0;">
+                                <div class="determinate" 
+                                     style="width: ${habit.success_rate}%; background: ${habit.status_color === 'green' ? '#4CAF50' : habit.status_color === 'orange' ? '#FF9800' : '#9E9E9E'}; border-radius: 3px;"></div>
+                            </div>
+                            
+                            <!-- Stats -->
+                            <p style="margin: 0; font-size: 0.85rem; color: #757575;">
+                                <span style="color: ${habit.status_color === 'green' ? '#4CAF50' : habit.status_color === 'orange' ? '#FF9800' : '#9E9E9E'}; font-weight: 600;">${habit.status}</span>
+                                 | ${habit.total_completed} از ${habit.total_days} روز
+                            </p>
+                        </div>
                     </div>
-                    <p class="grey-text">
-                        نرخ: <strong class="${habit.status_color}-text">${habit.success_rate}%</strong> (${habit.status}) |
-                        ${habit.total_completed} از ${habit.total_days} روز
-                    </p>
                 </div>
-            </li>
-        `).join('') + '</ul>';
+            </div>
+        `).join('');
         
         console.log('✅ Habits loaded:', habits.length);
     }
@@ -711,7 +746,7 @@ async function toggleHabit(habitId) {
 }
 
 // ────────────────────────────────────────────────────────────────
-// Other Pages
+// Reminders - Material Design
 // ────────────────────────────────────────────────────────────────
 async function loadReminders() {
     const result = await apiCall('reminders.php');
@@ -726,17 +761,29 @@ async function loadReminders() {
             return;
         }
         
-        container.innerHTML = '<ul class="collection">' + reminders.map(rem => `
-            <li class="collection-item avatar">
-                <i class="material-icons circle ${rem.is_past ? 'grey' : 'orange'}">notifications</i>
-                <span class="title">${rem.title}</span>
-                <p>${rem.description || ''}</p>
-                <p class="grey-text">ساعت: ${rem.time_fa}</p>
-            </li>
-        `).join('') + '</ul>';
+        container.innerHTML = reminders.map(rem => `
+            <div class="card hoverable" style="margin-top: 12px; border-left: 4px solid ${rem.is_past ? '#9E9E9E' : '#FF9800'};">
+                <div class="card-content" style="padding: 16px;">
+                    <div style="display: flex; align-items: start; gap: 12px;">
+                        <i class="material-icons" style="font-size: 32px; color: ${rem.is_past ? '#9E9E9E' : '#FF9800'};">notifications_active</i>
+                        <div style="flex: 1;">
+                            <h6 style="margin: 0 0 8px 0; font-weight: 600;">${rem.title}</h6>
+                            ${rem.description ? `<p style="margin: 0 0 8px 0; color: #757575;">${rem.description}</p>` : ''}
+                            <p style="margin: 0; font-size: 0.85rem; color: #FF9800; font-weight: 500;">
+                                <i class="material-icons tiny" style="vertical-align: middle;">schedule</i>
+                                ${rem.time_fa}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
     }
 }
 
+// ────────────────────────────────────────────────────────────────
+// Notes - Material Design
+// ────────────────────────────────────────────────────────────────
 async function loadNotes() {
     const result = await apiCall('notes.php');
     
@@ -751,10 +798,13 @@ async function loadNotes() {
         }
         
         container.innerHTML = notes.map(note => `
-            <div class="card hoverable">
-                <div class="card-content">
-                    <p>${note.preview}</p>
-                    <p class="grey-text" style="font-size: 0.8rem; margin-top: 8px;">${note.created_at_fa}</p>
+            <div class="card hoverable" style="margin-top: 12px;">
+                <div class="card-content" style="padding: 16px;">
+                    <p style="margin: 0 0 12px 0; font-size: 0.95rem; line-height: 1.6;">${note.preview}</p>
+                    <p style="margin: 0; font-size: 0.8rem; color: #757575;">
+                        <i class="material-icons tiny" style="vertical-align: middle;">access_time</i>
+                        ${note.created_at_fa}
+                    </p>
                 </div>
             </div>
         `).join('');
