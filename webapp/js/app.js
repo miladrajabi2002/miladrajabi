@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════════
-// Telegram WebApp - Material Design Complete
+// Telegram WebApp - Material Design Complete - Enhanced Charts
 // ════════════════════════════════════════════════════════════════
 
 const tg = window.Telegram?.WebApp || {};
@@ -13,6 +13,99 @@ let hapticEnabled = true;
 let incomeChart = null;
 let habitsChart = null;
 let incomeDetailChart = null;
+
+// ────────────────────────────────────────────────────────────────
+// Simple Cache System
+// ────────────────────────────────────────────────────────────────
+const cache = {
+    data: {},
+    set(key, value, ttl = 60000) { // 60 seconds default
+        this.data[key] = {
+            value,
+            expires: Date.now() + ttl
+        };
+    },
+    get(key) {
+        const item = this.data[key];
+        if (!item) return null;
+        if (Date.now() > item.expires) {
+            delete this.data[key];
+            return null;
+        }
+        return item.value;
+    },
+    clear() {
+        this.data = {};
+    }
+};
+
+// ────────────────────────────────────────────────────────────────
+// Chart Skeleton Loaders
+// ────────────────────────────────────────────────────────────────
+function showChartSkeleton(chartId) {
+    const canvas = document.getElementById(chartId);
+    if (!canvas) return;
+    
+    const container = canvas.parentElement;
+    if (!container) return;
+    
+    // Remove existing skeleton
+    const existing = container.querySelector('.chart-skeleton');
+    if (existing) existing.remove();
+    
+    const skeleton = document.createElement('div');
+    skeleton.className = 'chart-skeleton';
+    skeleton.innerHTML = `
+        <div style="height: 100%; display: flex; align-items: flex-end; gap: 8px; padding: 20px;">
+            ${Array(6).fill(0).map((_, i) => `
+                <div style="flex: 1; background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); 
+                            background-size: 200% 100%; animation: shimmer 1.5s infinite; 
+                            height: ${Math.random() * 60 + 40}%; border-radius: 4px 4px 0 0;"></div>
+            `).join('')}
+        </div>
+    `;
+    
+    // Add shimmer animation if not exists
+    if (!document.getElementById('shimmer-style')) {
+        const style = document.createElement('style');
+        style.id = 'shimmer-style';
+        style.textContent = `
+            @keyframes shimmer {
+                0% { background-position: -200% 0; }
+                100% { background-position: 200% 0; }
+            }
+            .chart-skeleton { 
+                position: absolute; 
+                top: 0; 
+                left: 0; 
+                right: 0; 
+                bottom: 0; 
+                z-index: 10;
+                background: white;
+                border-radius: 8px;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    container.style.position = 'relative';
+    container.appendChild(skeleton);
+}
+
+function hideChartSkeleton(chartId) {
+    const canvas = document.getElementById(chartId);
+    if (!canvas) return;
+    
+    const container = canvas.parentElement;
+    if (!container) return;
+    
+    const skeleton = container.querySelector('.chart-skeleton');
+    if (skeleton) {
+        skeleton.style.opacity = '0';
+        skeleton.style.transition = 'opacity 0.3s ease';
+        setTimeout(() => skeleton.remove(), 300);
+    }
+}
 
 // ────────────────────────────────────────────────────────────────
 // Jalaali Date
@@ -132,9 +225,19 @@ function initMaterialize() {
 }
 
 // ────────────────────────────────────────────────────────────────
-// API Calls
+// API Calls with Cache
 // ────────────────────────────────────────────────────────────────
-async function apiCall(endpoint, data = {}) {
+async function apiCall(endpoint, data = {}, useCache = true) {
+    const cacheKey = endpoint + JSON.stringify(data);
+    
+    if (useCache) {
+        const cached = cache.get(cacheKey);
+        if (cached) {
+            console.log('📦 Cache hit:', endpoint);
+            return cached;
+        }
+    }
+    
     try {
         const url = API_URL + endpoint;
         const response = await fetch(url, {
@@ -153,6 +256,11 @@ async function apiCall(endpoint, data = {}) {
         
         const result = await response.json();
         console.log('✅', endpoint, '→', result.success ? 'OK' : 'FAIL', result.error || '');
+        
+        if (result.success && useCache) {
+            cache.set(cacheKey, result);
+        }
+        
         return result;
         
     } catch (error) {
@@ -341,69 +449,175 @@ async function loadTodayHabits() {
     }
 }
 
+// ────────────────────────────────────────────────────────────────
+// Enhanced Income Chart with Skeleton & Animations
+// ────────────────────────────────────────────────────────────────
 function renderIncomeChart(data) {
     const ctx = document.getElementById('incomeChart');
     if (!ctx || typeof Chart === 'undefined') return;
     
-    if (incomeChart) incomeChart.destroy();
+    showChartSkeleton('incomeChart');
     
-    incomeChart = new Chart(ctx.getContext('2d'), {
-        type: 'line',
-        data: {
-            labels: data.map(d => d.month),
-            datasets: [{
-                label: 'درآمد',
-                data: data.map(d => {
-                    const num = typeof d.amount === 'string' ? parseFloat(d.amount) : d.amount;
-                    return Math.ceil(num / 1000000);
-                }),
-                borderColor: '#6366f1',
-                backgroundColor: 'rgba(99, 102, 241, 0.1)',
-                tension: 0.4,
-                fill: true,
-                borderWidth: 3
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: { callback: v => v + ' م' }
+    setTimeout(() => {
+        if (incomeChart) incomeChart.destroy();
+        
+        incomeChart = new Chart(ctx.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: data.map(d => d.month),
+                datasets: [{
+                    label: 'درآمد',
+                    data: data.map(d => {
+                        const num = typeof d.amount === 'string' ? parseFloat(d.amount) : d.amount;
+                        return Math.ceil(num / 1000000);
+                    }),
+                    borderColor: '#6366f1',
+                    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    borderWidth: 3,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: '#6366f1',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: '#6366f1',
+                    pointHoverBorderWidth: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: {
+                    duration: 1500,
+                    easing: 'easeInOutQuart',
+                    onComplete: () => hideChartSkeleton('incomeChart')
+                },
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        cornerRadius: 8,
+                        titleFont: { size: 14, weight: 'bold' },
+                        bodyFont: { size: 13 },
+                        displayColors: false,
+                        callbacks: {
+                            label: (context) => `${context.parsed.y} میلیون تومان`
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { 
+                            callback: v => v + ' م',
+                            font: { size: 11 },
+                            color: '#757575'
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)',
+                            drawBorder: false
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            font: { size: 11 },
+                            color: '#757575'
+                        },
+                        grid: {
+                            display: false
+                        }
+                    }
+                },
+                interaction: {
+                    mode: 'index',
+                    intersect: false
                 }
             }
-        }
-    });
+        });
+    }, 200);
 }
 
+// ────────────────────────────────────────────────────────────────
+// Enhanced Habits Chart with Gradient & Animations
+// ────────────────────────────────────────────────────────────────
 function renderHabitsChart(data) {
     const ctx = document.getElementById('habitsChart');
     if (!ctx || typeof Chart === 'undefined') return;
     
-    if (habitsChart) habitsChart.destroy();
+    showChartSkeleton('habitsChart');
     
-    habitsChart = new Chart(ctx.getContext('2d'), {
-        type: 'bar',
-        data: {
-            labels: data.map(d => d.day),
-            datasets: [{
-                label: 'عادت',
-                data: data.map(d => d.count),
-                backgroundColor: '#10b981',
-                borderRadius: 8
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-                y: { beginAtZero: true, ticks: { stepSize: 1 } }
+    setTimeout(() => {
+        if (habitsChart) habitsChart.destroy();
+        
+        habitsChart = new Chart(ctx.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: data.map(d => d.day),
+                datasets: [{
+                    label: 'عادت',
+                    data: data.map(d => d.count),
+                    backgroundColor: data.map((d, i) => {
+                        const alpha = 0.6 + (i / data.length) * 0.4;
+                        return `rgba(16, 185, 129, ${alpha})`;
+                    }),
+                    borderRadius: 8,
+                    borderWidth: 0,
+                    hoverBackgroundColor: '#059669',
+                    barThickness: 'flex',
+                    maxBarThickness: 40
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: {
+                    duration: 1200,
+                    easing: 'easeOutBounce',
+                    onComplete: () => hideChartSkeleton('habitsChart')
+                },
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        cornerRadius: 8,
+                        titleFont: { size: 14, weight: 'bold' },
+                        bodyFont: { size: 13 },
+                        displayColors: false,
+                        callbacks: {
+                            label: (context) => `${context.parsed.y} عادت انجام شده`
+                        }
+                    }
+                },
+                scales: {
+                    y: { 
+                        beginAtZero: true, 
+                        ticks: { 
+                            stepSize: 1,
+                            font: { size: 11 },
+                            color: '#757575'
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)',
+                            drawBorder: false
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            font: { size: 11 },
+                            color: '#757575'
+                        },
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
             }
-        }
-    });
+        });
+    }, 200);
 }
 
 // ────────────────────────────────────────────────────────────────
@@ -619,41 +833,95 @@ async function showIncomeDetail(incomeId) {
     }
 }
 
+// ────────────────────────────────────────────────────────────────
+// Enhanced Income Detail Chart
+// ────────────────────────────────────────────────────────────────
 function renderIncomeDetailChart(data) {
     const ctx = document.getElementById('incomeDetailChart');
     if (!ctx || typeof Chart === 'undefined') return;
     
-    if (incomeDetailChart) incomeDetailChart.destroy();
+    showChartSkeleton('incomeDetailChart');
     
-    incomeDetailChart = new Chart(ctx.getContext('2d'), {
-        type: 'line',
-        data: {
-            labels: data.map(d => d.month),
-            datasets: [{
-                label: 'درآمد',
-                data: data.map(d => {
-                    const num = typeof d.amount === 'string' ? parseFloat(d.amount) : d.amount;
-                    return Math.ceil(num / 1000000);
-                }),
-                borderColor: '#2196f3',
-                backgroundColor: 'rgba(33, 150, 243, 0.1)',
-                tension: 0.4,
-                fill: true,
-                borderWidth: 3
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: { callback: v => v + ' م' }
+    setTimeout(() => {
+        if (incomeDetailChart) incomeDetailChart.destroy();
+        
+        incomeDetailChart = new Chart(ctx.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: data.map(d => d.month),
+                datasets: [{
+                    label: 'درآمد',
+                    data: data.map(d => {
+                        const num = typeof d.amount === 'string' ? parseFloat(d.amount) : d.amount;
+                        return Math.ceil(num / 1000000);
+                    }),
+                    borderColor: '#2196f3',
+                    backgroundColor: 'rgba(33, 150, 243, 0.15)',
+                    tension: 0.4,
+                    fill: true,
+                    borderWidth: 3,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: '#2196f3',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: '#2196f3',
+                    pointHoverBorderWidth: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: {
+                    duration: 1500,
+                    easing: 'easeInOutQuart',
+                    onComplete: () => hideChartSkeleton('incomeDetailChart')
+                },
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(33, 150, 243, 0.9)',
+                        padding: 12,
+                        cornerRadius: 8,
+                        titleFont: { size: 14, weight: 'bold' },
+                        bodyFont: { size: 13 },
+                        displayColors: false,
+                        callbacks: {
+                            label: (context) => `${context.parsed.y} میلیون تومان`
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { 
+                            callback: v => v + ' م',
+                            font: { size: 11 },
+                            color: '#757575'
+                        },
+                        grid: {
+                            color: 'rgba(33, 150, 243, 0.1)',
+                            drawBorder: false
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            font: { size: 11 },
+                            color: '#757575'
+                        },
+                        grid: {
+                            display: false
+                        }
+                    }
+                },
+                interaction: {
+                    mode: 'index',
+                    intersect: false
                 }
             }
-        }
-    });
+        });
+    }, 200);
 }
 
 // ────────────────────────────────────────────────────────────────
