@@ -178,15 +178,6 @@ body {
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.card.hoverable:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-lg) !important;
-}
-
-.card.hoverable:active {
-    transform: translateY(-2px);
-}
-
 .card-title {
     display: flex !important;
     align-items: center !important;
@@ -585,7 +576,7 @@ body {
 
 /* Icon Container */
 .nav-item i {
-    font-size: 28px;
+    font-size: 32px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     z-index: 1;
@@ -593,7 +584,7 @@ body {
 
 /* Label Styling */
 .nav-item span {
-    font-size: 0.75rem;
+    font-size: 0.85rem;
     font-weight: 600;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     opacity: 0.7;
