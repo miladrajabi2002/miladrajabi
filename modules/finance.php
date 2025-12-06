@@ -128,8 +128,15 @@ function handleFinanceCallback($chat_id, $user_id, $data, $message_id)
 
       case 'delete':
          $type = $parts[2];
-         if ($type == 'check') $type .= '_' . $parts[3];
-         $item_id = $parts[4];
+
+         if ($type == 'check') {
+            $check_type = $parts[3];
+            $item_id = $parts[4];
+            $type = 'check_' . $check_type;
+         } else {
+            $item_id = $parts[3] ?? 0;
+         }
+      
          confirmDeleteFinancialItem($chat_id, $user_id, $message_id, $type, $item_id);
          break;
 
@@ -1254,5 +1261,6 @@ function saveCheck($chat_id, $user_id, $type, $account_holder, $amount, $due_dat
       sendMessage($chat_id, "❌ خطا در ثبت اطلاعات. لطفاً دوباره تلاش کنید.");
    }
 }
+
 
 
